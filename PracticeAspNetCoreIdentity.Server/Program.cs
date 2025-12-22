@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server;
 using PracticeAspNetCoreIdentity.Server.Models;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,9 +79,6 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -93,8 +91,7 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
