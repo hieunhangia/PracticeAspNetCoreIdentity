@@ -45,31 +45,6 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.User.RequireUniqueEmail = true; // default is false
 });
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    //options.LoginPath = "/Login"; // Not needed for API
-    options.Events.OnRedirectToLogin = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        return Task.CompletedTask;
-    }; // For API, return 401 instead of redirecting to login page.
-    
-    //options.AccessDeniedPath = "/AccessDenied"; // Not needed for API
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return Task.CompletedTask;
-    }; // For API, return 403 instead of redirecting to access denied page.
-    
-    options.Cookie.Name = "AppAuthCookie";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.None; 
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    
-    options.ExpireTimeSpan = TimeSpan.FromDays(36);
-    options.SlidingExpiration = true;
-});
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorWasm",
@@ -98,7 +73,6 @@ app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWasm");
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapControllers();
 app.MapIdentityApi<CustomUser>();
