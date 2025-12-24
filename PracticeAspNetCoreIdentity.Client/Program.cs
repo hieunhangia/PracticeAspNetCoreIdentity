@@ -10,12 +10,12 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, CookieAuthenticationStateProvider>();
+builder.Services.AddScoped(sp => (IAccountManagement)sp.GetRequiredService<AuthenticationStateProvider>());
 
-builder.Services.AddScoped(_ => 
-    new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<CookieHandler>();
-builder.Services.AddHttpClient<WebApiHttpClient>(
-        client => client.BaseAddress = new Uri(builder.Configuration["WebApiBaseUrl"]!))
+builder.Services
+    .AddHttpClient<WebApiHttpClient>(client => client.BaseAddress = new Uri(builder.Configuration["WebApiBaseUrl"]!))
     .AddHttpMessageHandler<CookieHandler>();
 
 await builder.Build().RunAsync();

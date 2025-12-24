@@ -5,58 +5,56 @@
 <p>@Message</p>
 
 <EditForm Model="@this" OnValidSubmit="RegisterAsync">
-    <DataAnnotationsValidator />
+    <DataAnnotationsValidator/>
 
     <div class="form-group">
         <label for="email">Email</label>
-        <InputText id="email" type="email" class="form-control" @bind-Value="Email" />
-        <ValidationMessage For="@(() => Email)" />
+        <InputText id="email" type="email" class="form-control" @bind-Value="Email"/>
+        <ValidationMessage For="@(() => Email)"/>
     </div>
 
     <div class="form-group">
         <label for="password">Password</label>
-        <InputText id="password" type="password" class="form-control" @bind-Value="Password" />
-        <ValidationMessage For="@(() => Password)" />
+        <InputText id="password" type="password" class="form-control" @bind-Value="Password"/>
+        <ValidationMessage For="@(() => Password)"/>
     </div>
 
     <div class="form-group">
         <label for="confirmPassword">Confirm Password</label>
-        <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="ConfirmPassword" />
-        <ValidationMessage For="@(() => ConfirmPassword)" />
+        <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="ConfirmPassword"/>
+        <ValidationMessage For="@(() => ConfirmPassword)"/>
     </div>
     <button type="submit" class="btn btn-primary">Register</button>
 </EditForm>
 
 @using System.ComponentModel.DataAnnotations
-@inject WebApiHttpClient WebApiHttpClient
+@using PracticeAspNetCoreIdentity.Client.Identity
+@inject IAccountManagement AccountManagement
+@inject NavigationManager NavigationManager
+
 @code {
-    
-    [Required]
-    [EmailAddress]
-    public string? Email { get; set; }
-    
-    [Required]
-    [MinLength(6, ErrorMessage = "Password must be at least 6 characters long.")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, and one number.")]
-    public string? Password { get; set; }
-    
+
+    [Required] [EmailAddress] public string? Email { get; set; }
+
+    [Required] public string? Password { get; set; }
+
     [Required]
     [Compare("Password", ErrorMessage = "Passwords do not match.")]
     public string? ConfirmPassword { get; set; }
 
     private string? Message { get; set; }
-    
+
     private async Task RegisterAsync()
     {
-        using var result = await WebApiHttpClient.RegisterAsync(Email ?? "", Password ?? "");
-
-        if (result.IsSuccessStatusCode)
+        var result = await AccountManagement.RegisterAsync(Email ?? "", Password ?? "");
+        if (result.Succeeded)
         {
-            Message = "Registration successful!";
+            NavigationManager.NavigateTo("/login?message-code=RegistrationSuccessful");
         }
         else
         {
-            Message = $"Registration failed: {await result.Content.ReadAsStringAsync()}";
+            Message = $"Registration failed: {string.Join(", ", result.ErrorList)}";
         }
     }
+
 }
