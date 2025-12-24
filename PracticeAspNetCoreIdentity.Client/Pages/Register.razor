@@ -28,7 +28,7 @@
 </EditForm>
 
 @using System.ComponentModel.DataAnnotations
-@inject HttpClient HttpClient
+@inject WebApiHttpClient WebApiHttpClient
 @code {
     
     [Required]
@@ -48,12 +48,7 @@
     
     private async Task RegisterAsync()
     {
-        using var result = await HttpClient.PostAsJsonAsync(
-        "register", new
-        {
-            Email,
-            Password
-        });
+        using var result = await WebApiHttpClient.RegisterAsync(Email ?? "", Password ?? "");
 
         if (result.IsSuccessStatusCode)
         {
