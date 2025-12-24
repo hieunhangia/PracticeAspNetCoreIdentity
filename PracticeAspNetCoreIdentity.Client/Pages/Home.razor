@@ -4,10 +4,33 @@
 
 <AuthorizeView>
     <Authorized>
-        Logged in as @context.User.Identity?.Name 
+        Logged in as @context.User.Identity?.Name
+        <button @onclick="LogoutAsync">Logout</button>
     </Authorized>
     <NotAuthorized>
         <a href="login">Login</a>
         <a href="register">Register</a>
     </NotAuthorized>
 </AuthorizeView>
+
+<p>@Message</p>
+
+@inject WebApiHttpClient WebApiHttpClient
+
+@code
+{
+    private string? Message { get; set; }
+
+    private async Task LogoutAsync()
+    {
+        using var result = await WebApiHttpClient.CookieLogoutAsync();
+        if (result.IsSuccessStatusCode)
+        {
+            Message = "Logout successful!";
+        }
+        else
+        {
+            Message = "Logout failed.";
+        }
+    }
+}
