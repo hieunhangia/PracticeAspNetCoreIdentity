@@ -48,7 +48,7 @@
     
     private async Task RegisterAsync()
     {
-        var result = await HttpClient.PostAsJsonAsync(
+        using var result = await HttpClient.PostAsJsonAsync(
         "register", new
         {
             Email,
