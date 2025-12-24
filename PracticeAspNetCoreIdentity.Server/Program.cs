@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server;
@@ -82,5 +83,20 @@ app.MapPost("/logout", async (SignInManager<CustomUser> signInManager) =>
         return Results.Ok();
     })
     .RequireAuthorization();
+app.MapGet("/roles", (ClaimsPrincipal user) =>
+{
+    if (user.Identity is not { IsAuthenticated: true }) return Results.Unauthorized();
+    var identity = (ClaimsIdentity)user.Identity;
+    var roles = identity.FindAll(identity.RoleClaimType)
+        .Select(c => new
+        {
+            c.Issuer,
+            c.OriginalIssuer,
+            c.Type,
+            c.Value,
+            c.ValueType
+        });
+    return TypedResults.Json(roles);
+}).RequireAuthorization();
 
 app.Run();

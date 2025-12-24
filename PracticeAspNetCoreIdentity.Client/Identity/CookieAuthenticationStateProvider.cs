@@ -11,10 +11,11 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 {
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        using var response = await webApiHttpClient.GetUserInfoAsync();
-        if (!response.IsSuccessStatusCode) return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+        using var userResponse = await webApiHttpClient.GetUserInfoAsync();
+        if (!userResponse.IsSuccessStatusCode)
+            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
-        var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
+        var userInfo = await userResponse.Content.ReadFromJsonAsync<UserInfo>();
         if (userInfo == null) return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
         var claims = new List<Claim>
@@ -26,7 +27,16 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
             .Where(c => c.Key != ClaimTypes.Name)
             .Select(c => new Claim(c.Key, c.Value)));
 
-        // In a real application, you might also fetch roles or other claims here.
+        using var rolesResponse = await webApiHttpClient.GetUserRolesAsync();
+
+        if (!rolesResponse.IsSuccessStatusCode)
+            return new AuthenticationState(
+                new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));
+
+        var roles = await rolesResponse.Content.ReadFromJsonAsync<RoleClaim[]>();
+        if (roles != null)
+            claims.AddRange(roles
+                .Select(role => new Claim(role.Type, role.Value, role.ValueType, role.Issuer, role.OriginalIssuer)));
 
         return new AuthenticationState(
             new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));
