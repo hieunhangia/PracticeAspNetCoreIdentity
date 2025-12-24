@@ -35,7 +35,7 @@
     
     private async Task LoginAsync()
     {
-        using var result = await WebApiHttpClient.LoginAsync(Email ?? "", Password ?? "");
+        using var result = await WebApiHttpClient.CookieLoginAsync(Email ?? "", Password ?? "");
         if (result.IsSuccessStatusCode)
         {
             Message = "Login successful!";

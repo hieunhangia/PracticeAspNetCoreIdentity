@@ -1,5 +1,7 @@
+using System.Net.Http.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
+using PracticeAspNetCoreIdentity.Client.Identity.Models;
 
 namespace PracticeAspNetCoreIdentity.Client.Identity;
 
@@ -7,8 +9,10 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 {
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var userInfo = await webApiHttpClient.GetUserInfoAsync();
-
+        using var userResponse = await webApiHttpClient.GetUserInfoAsync();
+        if (!userResponse.IsSuccessStatusCode) return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+        
+        var userInfo = await userResponse.Content.ReadFromJsonAsync<UserInfo>();
         if (userInfo == null) return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         
         var claims = new List<Claim>
