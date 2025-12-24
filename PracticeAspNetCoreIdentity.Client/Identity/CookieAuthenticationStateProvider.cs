@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 
-namespace PracticeAspNetCoreIdentity.Client;
+namespace PracticeAspNetCoreIdentity.Client.Identity;
 
 public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient) : AuthenticationStateProvider
 {
