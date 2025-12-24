@@ -33,9 +33,9 @@
 @inject NavigationManager NavigationManager
 
 @code {
-    [Required] [EmailAddress] public string? Email { get; set; }
+    [Required] [EmailAddress] public string Email { get; set; } = string.Empty;
 
-    [Required] public string? Password { get; set; }
+    [Required] public string Password { get; set; } = string.Empty;
 
     private string? Message { get; set; }
 
@@ -44,7 +44,7 @@
 
     private async Task LoginAsync()
     {
-        var result = await AccountManagement.LoginAsync(Email ?? "", Password ?? "");
+        var result = await AccountManagement.LoginAsync(Email, Password);
         if (result.Succeeded)
         {
             NavigationManager.NavigateTo(RouteConstants.Home);
