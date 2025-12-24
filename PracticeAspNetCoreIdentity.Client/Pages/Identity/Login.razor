@@ -1,4 +1,5 @@
-@page "/login"
+@using PracticeAspNetCoreIdentity.Client.Constants
+@attribute [Route(RouteConstants.Login)]
 
 <h3>Login</h3>
 
@@ -46,7 +47,7 @@
         var result = await AccountManagement.LoginAsync(Email ?? "", Password ?? "");
         if (result.Succeeded)
         {
-            NavigationManager.NavigateTo("/");
+            NavigationManager.NavigateTo(RouteConstants.Home);
         }
         else
         {
