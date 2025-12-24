@@ -16,8 +16,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAuthorization();
-        
+
 builder.Services.AddIdentityApiEndpoints<CustomUser>()
+    .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.Configure<IdentityOptions>(options =>
@@ -25,20 +26,20 @@ builder.Services.Configure<IdentityOptions>(options =>
     //options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5); // default is 5 minutes
     //options.Lockout.MaxFailedAccessAttempts = 5; // default is 5
     //options.Lockout.AllowedForNewUsers = true; // default is true
-    
+
     //options.Password.RequireDigit = true; // default is true
     //options.Password.RequireLowercase = true; // default is true
     //options.Password.RequireNonAlphanumeric = true; // default is true
     //options.Password.RequireUppercase = true; // default is true
     //options.Password.RequiredLength = 6; // default is 6
     //options.Password.RequiredUniqueChars = 1; // default is 1
-    
+
     //options.SignIn.RequireConfirmedEmail = false; //default is false
     //options.SignIn.RequireConfirmedAccount = false; //default is false
     //options.SignIn.RequireConfirmedPhoneNumber = false; //default is false
-    
+
     //options.Tokens.
-    
+
     //options.User.AllowedUserNameCharacters =
     //"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
     // default is "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"
@@ -58,8 +59,7 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
+    await SeedData.InitializeAsync(scope.ServiceProvider, builder.Configuration);
 }
 
 // Configure the HTTP request pipeline.
@@ -76,7 +76,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapIdentityApi<CustomUser>();
-app.MapPost("/logout", async (SignInManager<CustomUser> signInManager) => 
+app.MapPost("/logout", async (SignInManager<CustomUser> signInManager) =>
     {
         await signInManager.SignOutAsync();
         return Results.Ok();
