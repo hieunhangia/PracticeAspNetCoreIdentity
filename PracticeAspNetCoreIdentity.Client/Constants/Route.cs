@@ -1,6 +1,6 @@
 namespace PracticeAspNetCoreIdentity.Client.Constants;
 
-public static class RouteConstants
+public static class Route
 {
     public const string NotFound = "/not-found";
     public const string Home = "/";

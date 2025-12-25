@@ -1,5 +1,4 @@
-@using PracticeAspNetCoreIdentity.Client.Constants
-@attribute [Route(RouteConstants.Register)]
+@attribute [Route(Constants.Route.Register)]
 
 <h3>Register</h3>
 
@@ -50,7 +49,7 @@
         var result = await AccountManagement.RegisterAsync(Email, Password);
         if (result.Succeeded)
         {
-            NavigationManager.NavigateTo($"{RouteConstants.Login}?message-code=RegistrationSuccessful");
+            NavigationManager.NavigateTo($"{Constants.Route.Login}?message-code=RegistrationSuccessful");
         }
         else
         {

@@ -1,5 +1,4 @@
-@using PracticeAspNetCoreIdentity.Client.Constants
-@attribute [Route(RouteConstants.Login)]
+@attribute [Route(Constants.Route.Login)]
 
 <h3>Login</h3>
 
@@ -47,7 +46,7 @@
         var result = await AccountManagement.LoginAsync(Email, Password);
         if (result.Succeeded)
         {
-            NavigationManager.NavigateTo(RouteConstants.Home);
+            NavigationManager.NavigateTo(Constants.Route.Home);
         }
         else
         {

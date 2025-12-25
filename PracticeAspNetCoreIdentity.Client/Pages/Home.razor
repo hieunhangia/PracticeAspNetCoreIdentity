@@ -1,5 +1,4 @@
-﻿@using PracticeAspNetCoreIdentity.Client.Constants
-@attribute [Route(RouteConstants.Home)]
+﻿@attribute [Route(Constants.Route.Home)]
 
 <PageTitle>Home</PageTitle>
 
@@ -9,8 +8,8 @@
         <button @onclick="LogoutAsync">Logout</button>
     </Authorized>
     <NotAuthorized>
-        <a href="@RouteConstants.Login">Login</a>
-        <a href="@RouteConstants.Register">Register</a>
+        <a href="@Constants.Route.Login">Login</a>
+        <a href="@Constants.Route.Register">Register</a>
     </NotAuthorized>
 </AuthorizeView>
 
