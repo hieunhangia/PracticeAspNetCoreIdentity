@@ -1,27 +1,33 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
-    <main>
-        <div class="top-row px-4">
-            <AuthorizeView>
-                <Authorized>
-                    Logged in as @context.User.Identity?.Name.
-                    <button @onclick="LogoutAsync">Logout</button>
-                </Authorized>
-                <NotAuthorized>
-                    <a href="@Constants.Route.Login">Login</a>
-                    <a href="@Constants.Route.Register">Register</a>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
+    <div class="top-row px-4">
+        <button @onclick="NavigateToHome">Home</button>
+        <AuthorizeView>
+            <Authorized>
+                Logged in as @context.User.Identity?.Name.
+                <button @onclick="LogoutAsync">Logout</button>
+            </Authorized>
+            <NotAuthorized>
+                <button @onclick="NavigateToLogin">Login</button>
+                <button @onclick="NavigateToRegister">Register</button>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
 
-        @Body
-    </main>
+    @Body
 </div>
 
 @inject IAccountManagement AccountManagement
+@inject NavigationManager NavigationManager
 
 @code
 {
+    private void NavigateToHome() => NavigationManager.NavigateTo(Constants.Route.Home);
+
     private async Task LogoutAsync() => await AccountManagement.LogoutAsync();
+
+    private void NavigateToLogin() => NavigationManager.NavigateTo(Constants.Route.Login);
+
+    private void NavigateToRegister() => NavigationManager.NavigateTo(Constants.Route.Register);
 }
