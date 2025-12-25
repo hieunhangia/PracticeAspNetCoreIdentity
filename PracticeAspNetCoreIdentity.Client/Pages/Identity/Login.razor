@@ -31,6 +31,20 @@
 @inject NavigationManager NavigationManager
 
 @code {
+
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateTask;
+        var user = authState.User;
+
+        if (user.Identity is { IsAuthenticated: true })
+        {
+            NavigationManager.NavigateTo(Constants.Route.Home);
+        }
+    }
+
     [Required] [EmailAddress] public string Email { get; set; } = string.Empty;
 
     [Required] public string Password { get; set; } = string.Empty;
