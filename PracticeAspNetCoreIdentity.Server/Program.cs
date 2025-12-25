@@ -76,7 +76,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapIdentityApi<CustomUser>();
+app.MapIdentityApiCustom();
 app.MapPost("/logout", async (SignInManager<CustomUser> signInManager) =>
     {
         await signInManager.SignOutAsync();
