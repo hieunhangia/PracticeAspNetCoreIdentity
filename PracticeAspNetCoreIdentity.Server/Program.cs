@@ -77,16 +77,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapIdentityApiCustom();
-app.MapPost("/logout", async (SignInManager<CustomUser> signInManager) =>
-    {
-        await signInManager.SignOutAsync();
-        return Results.Ok();
-    })
-    .RequireAuthorization();
-app.MapGet("/roles", (ClaimsPrincipal user) =>
-{
-    var identity = (ClaimsIdentity)user.Identity!;
-    return Results.Ok(identity.FindAll(identity.RoleClaimType).Select(c => c.Value));
-}).RequireAuthorization();
+
 
 app.Run();
