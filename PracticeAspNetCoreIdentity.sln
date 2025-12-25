@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PracticeAspNetCoreIdentity.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PracticeAspNetCoreIdentity.Client", "PracticeAspNetCoreIdentity.Client\PracticeAspNetCoreIdentity.Client.csproj", "{4604D1C3-9AE3-431A-A5E2-CE5A6AC45055}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PracticeAspNetCoreIdentity.Shared", "PracticeAspNetCoreIdentity.Shared\PracticeAspNetCoreIdentity.Shared.csproj", "{8453FEC0-72EB-4F0B-9B79-030B919FBEAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{4604D1C3-9AE3-431A-A5E2-CE5A6AC45055}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4604D1C3-9AE3-431A-A5E2-CE5A6AC45055}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4604D1C3-9AE3-431A-A5E2-CE5A6AC45055}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8453FEC0-72EB-4F0B-9B79-030B919FBEAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8453FEC0-72EB-4F0B-9B79-030B919FBEAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8453FEC0-72EB-4F0B-9B79-030B919FBEAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8453FEC0-72EB-4F0B-9B79-030B919FBEAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
