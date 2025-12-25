@@ -36,6 +36,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         var roles = await rolesResponse.Content.ReadFromJsonAsync<RoleClaim[]>();
         if (roles != null)
             claims.AddRange(roles
+                .Where(role => !string.IsNullOrEmpty(role.Type) && !string.IsNullOrEmpty(role.Value))
                 .Select(role => new Claim(role.Type, role.Value, role.ValueType, role.Issuer, role.OriginalIssuer)));
 
         return new AuthenticationState(
