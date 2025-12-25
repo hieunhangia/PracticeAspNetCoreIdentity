@@ -18,6 +18,12 @@ public class UserNoteController(AppDbContext context) : ControllerBase
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var userNote = await context.UserNotes
             .Where(u => u.UserId == userId)
+            .Select(u => new UserNoteDto 
+            {
+                Id = u.Id,
+                Name = u.Name, 
+                Content = u.Content
+            })
             .ToListAsync();
         return Ok(userNote);
     }
@@ -29,7 +35,14 @@ public class UserNoteController(AppDbContext context) : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var userNote = await context.UserNotes
-            .FirstOrDefaultAsync(u => u.UserId == userId && u.Id == id);
+            .Where(u => u.UserId == userId && u.Id == id)
+            .Select(u => new UserNoteDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Content = u.Content
+            })
+            .FirstOrDefaultAsync();
         return userNote != null ? Ok(userNote) : NotFound();
     }
 
