@@ -1,4 +1,4 @@
-namespace PracticeAspNetCoreIdentity.Server.Constants;
+namespace PracticeAspNetCoreIdentity.Shared.Constants;
 
 public static class UserRole
 {

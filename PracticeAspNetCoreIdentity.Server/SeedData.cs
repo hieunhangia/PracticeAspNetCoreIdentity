@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
-using PracticeAspNetCoreIdentity.Server.Constants;
 using PracticeAspNetCoreIdentity.Server.Models;
+using PracticeAspNetCoreIdentity.Shared.Constants;
 
 namespace PracticeAspNetCoreIdentity.Server;
 
