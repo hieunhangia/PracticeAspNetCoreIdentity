@@ -1,0 +1,75 @@
+@attribute [Route(Constants.Route.UpdateNote + "/{NoteId:guid}")]
+<h3>Update Note</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <p>@Message</p>
+        @if (IsLoadedNoteSuccessfully)
+        {
+            <EditForm Model="@UpdatingNote" OnValidSubmit="UpdateNoteAsync" Context="_">
+                <DataAnnotationsValidator/>
+                <div>
+                    <label for="name">Name:</label>
+                    <InputText id="name" @bind-Value="UpdatingNote.Name"/>
+                    <ValidationMessage For="@(() => UpdatingNote.Name)"/>
+                </div>
+                <div>
+                    <label for="content">Content:</label>
+                    <InputTextArea id="content" @bind-Value="UpdatingNote.Content"/>
+                    <ValidationMessage For="@(() => UpdatingNote.Content)"/>
+                </div>
+                <button type="submit">Update Note</button>
+            </EditForm>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>You need to be logged in to view this page.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@using PracticeAspNetCoreIdentity.Shared.Models
+@inject WebApiHttpClient WebApiHttpClient
+@inject NavigationManager NavigationManager
+@code {
+    [Parameter]
+    public Guid NoteId { get; set; }
+    
+    private readonly CreateUpdateUserNoteRequest UpdatingNote = new();
+
+    private bool IsLoadedNoteSuccessfully { get; set; }
+    
+    private string? Message { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await WebApiHttpClient.GetNoteByIdAsync(NoteId);
+        if (response.IsSuccessStatusCode)
+        {
+            var note = await response.Content.ReadFromJsonAsync<UserNoteDto>();
+            if (note != null)
+            {
+                UpdatingNote.Name = note.Name;
+                UpdatingNote.Content = note.Content;
+            }
+            IsLoadedNoteSuccessfully = true;
+        }
+        else
+        {
+            Message = "Error retrieving note.";
+            IsLoadedNoteSuccessfully = false;
+        }
+    }
+    
+    private async Task UpdateNoteAsync()
+    { 
+        var response = await WebApiHttpClient.UpdateNoteAsync(NoteId, UpdatingNote);
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo(Constants.Route.AllNotes);
+        }
+        else
+        {
+            Message = "Error updating note.";
+        }
+    }
+}

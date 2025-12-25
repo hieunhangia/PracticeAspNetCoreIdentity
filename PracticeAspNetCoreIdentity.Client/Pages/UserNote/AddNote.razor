@@ -1,0 +1,48 @@
+
+@attribute [Route(Constants.Route.AddNote)]
+<h3>Add Note</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <p>@Message</p>
+        <EditForm Model="@NewNote" OnValidSubmit="AddNoteAsync" Context="_">
+            <DataAnnotationsValidator/>
+            <div>
+                <label for="name">Name:</label>
+                <InputText id="name" @bind-Value="NewNote.Name"/>
+                <ValidationMessage For="@(() => NewNote.Name)"/>
+            </div>
+            <div>
+                <label for="content">Content:</label>
+                <InputTextArea id="content" @bind-Value="NewNote.Content"/>
+                <ValidationMessage For="@(() => NewNote.Content)"/>
+            </div>
+            <button type="submit">Add Note</button>
+        </EditForm>
+    </Authorized>
+    <NotAuthorized>
+        <p>You need to be logged in to view this page.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@using PracticeAspNetCoreIdentity.Shared.Models
+@inject WebApiHttpClient WebApiHttpClient
+@inject NavigationManager NavigationManager
+@code {
+    private readonly CreateUpdateUserNoteRequest NewNote = new();
+    
+    private string? Message { get; set; }
+    
+    private async Task AddNoteAsync()
+    { 
+        var response = await WebApiHttpClient.AddNoteAsync(NewNote);
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo(Constants.Route.AllNotes);
+        }
+        else
+        {
+            Message = "Error adding note.";
+        }
+    }
+}

@@ -6,6 +6,7 @@
         <AuthorizeView>
             <Authorized>
                 Logged in as @context.User.Identity?.Name.
+                <button @onclick="NavigateToAllNote">All Notes</button>
                 <button @onclick="LogoutAsync">Logout</button>
             </Authorized>
             <NotAuthorized>
@@ -30,4 +31,6 @@
     private void NavigateToLogin() => NavigationManager.NavigateTo(Constants.Route.Login);
 
     private void NavigateToRegister() => NavigationManager.NavigateTo(Constants.Route.Register);
+    
+    private void NavigateToAllNote() => NavigationManager.NavigateTo(Constants.Route.AllNotes);
 }

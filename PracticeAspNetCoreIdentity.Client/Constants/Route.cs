@@ -6,4 +6,8 @@ public static class Route
     public const string Home = "/";
     public const string Login = "/login";
     public const string Register = "/register";
+    
+    public const string AddNote = "/add-note";
+    public const string UpdateNote = "/update-note";
+    public const string AllNotes = "/all-notes";
 }

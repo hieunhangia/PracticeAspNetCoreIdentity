@@ -1,0 +1,72 @@
+@attribute [Route(Constants.Route.AllNotes)]
+
+<h3>All Notes</h3>
+<AuthorizeView>
+    <Authorized>
+        <p>@Message</p>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Content</th>
+                <th>Action</th>
+            </tr>
+            @foreach (var userNote in UserNotes)
+            {
+                <tr>
+                    <td>@userNote.Name</td>
+                    <td>@userNote.Content</td>
+                    <td>
+                        <button @onclick="() => NavigateToUpdateNote(userNote.Id)">Update Note</button>
+                        <button @onclick="() => DeleteNote(userNote.Id)">Delete Note</button>
+                    </td>
+                </tr>
+            }
+        </table>
+        <button @onclick="NavigateToAddNote">Add Note</button>
+    </Authorized>
+    <NotAuthorized>
+        <p>You need to be logged in to view this page.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@using PracticeAspNetCoreIdentity.Shared.Models
+@inject WebApiHttpClient WebApiHttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+@code {
+    private IEnumerable<UserNoteDto> UserNotes = [];
+    
+    private string? Message { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await WebApiHttpClient.GetAllNotesAsync();
+        if (response.IsSuccessStatusCode)
+        {
+            UserNotes = await response.Content.ReadFromJsonAsync<IEnumerable<UserNoteDto>>() ?? [];
+        }
+        else
+        {
+            Message = "Error retrieving notes.";
+        }
+    }
+    
+    private void NavigateToAddNote() => NavigationManager.NavigateTo(Constants.Route.AddNote);
+    
+    private void NavigateToUpdateNote(Guid noteId) => NavigationManager.NavigateTo($"{Constants.Route.UpdateNote}/{noteId}");
+    
+    private async Task DeleteNote(Guid noteId)
+    {
+        if (!await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this note?")) return;
+        
+        var response = await WebApiHttpClient.DeleteNoteAsync(noteId);
+        if (response.IsSuccessStatusCode)
+        {
+            UserNotes = UserNotes.Where(n => n.Id != noteId);
+        }
+        else
+        {
+            Message = "Error deleting note.";
+        }
+    }
+}
