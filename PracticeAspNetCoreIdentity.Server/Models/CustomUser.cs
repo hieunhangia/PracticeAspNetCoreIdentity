@@ -4,5 +4,5 @@ namespace PracticeAspNetCoreIdentity.Server.Models;
 
 public class CustomUser : IdentityUser<Guid>
 {
-    public string? FullName { get; set; }
+    public ICollection<UserNote>? UserNotes { get; set; }
 }

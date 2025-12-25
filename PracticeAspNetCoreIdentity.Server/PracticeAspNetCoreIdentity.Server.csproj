@@ -14,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Controllers\" />
+      <ProjectReference Include="..\PracticeAspNetCoreIdentity.Shared\PracticeAspNetCoreIdentity.Shared.csproj" />
     </ItemGroup>
 
 </Project>
