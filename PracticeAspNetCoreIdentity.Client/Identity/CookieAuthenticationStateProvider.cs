@@ -33,11 +33,11 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
             return new AuthenticationState(
                 new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));
 
-        var roles = await rolesResponse.Content.ReadFromJsonAsync<RoleClaim[]>();
+        var roles = await rolesResponse.Content.ReadFromJsonAsync<string[]>();
         if (roles != null)
             claims.AddRange(roles
-                .Where(role => !string.IsNullOrEmpty(role.Type) && !string.IsNullOrEmpty(role.Value))
-                .Select(role => new Claim(role.Type, role.Value, role.ValueType, role.Issuer, role.OriginalIssuer)));
+                .Where(role => !string.IsNullOrWhiteSpace(role))
+                .Select(role => new Claim(ClaimTypes.Role, role)));
 
         return new AuthenticationState(
             new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));
