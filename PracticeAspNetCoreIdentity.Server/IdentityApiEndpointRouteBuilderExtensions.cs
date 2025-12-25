@@ -293,13 +293,6 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok();
         });
 
-        routeGroup.MapPost("/cookie-logout", async (SignInManager<CustomUser> signInManager) =>
-            {
-                await signInManager.SignOutAsync();
-                return Results.Ok();
-            })
-            .RequireAuthorization();
-
         var accountGroup = routeGroup.MapGroup("/manage").RequireAuthorization();
 
         accountGroup.MapPost("/2fa", async Task<Results<Ok<TwoFactorResponse>, ValidationProblem, NotFound>>
@@ -445,6 +438,12 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
         });
 
+        routeGroup.MapPost("/cookie-logout", async (SignInManager<CustomUser> signInManager) =>
+        {
+            await signInManager.SignOutAsync();
+            return Results.Ok();
+        }).RequireAuthorization();
+
         accountGroup.MapGet("/roles", async (
             ClaimsPrincipal user,
             UserManager<CustomUser> userManager
@@ -452,7 +451,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         {
             var userDb = await userManager.GetUserAsync(user);
             if (userDb == null) return Results.Unauthorized();
-            
+
             var roles = await userManager.GetRolesAsync(userDb);
             return Results.Ok(roles);
         });
