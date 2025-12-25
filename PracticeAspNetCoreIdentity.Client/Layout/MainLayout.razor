@@ -1,3 +1,27 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<div class="page">
+    <main>
+        <div class="top-row px-4">
+            <AuthorizeView>
+                <Authorized>
+                    Logged in as @context.User.Identity?.Name.
+                    <button @onclick="LogoutAsync">Logout</button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="@Constants.Route.Login">Login</a>
+                    <a href="@Constants.Route.Register">Register</a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+
+        @Body
+    </main>
+</div>
+
+@inject IAccountManagement AccountManagement
+
+@code
+{
+    private async Task LogoutAsync() => await AccountManagement.LogoutAsync();
+}
