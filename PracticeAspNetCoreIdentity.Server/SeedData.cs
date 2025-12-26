@@ -8,34 +8,24 @@ public static class SeedData
 {
     private static readonly string[] roles = [UserRole.Administrator, UserRole.Manager, UserRole.User];
 
-    private static readonly (CustomUser user, string password, string[] roles)[] users =
+    private static readonly (string Email, string Password, bool LockoutEnabled, string[] Roles)[] users =
     [
         (
-            new CustomUser
-            {
-                UserName = "admin@app.com",
-                Email = "admin@app.com",
-                LockoutEnabled = false
-            },
-            "Admin@36",
+            "admin@app.com",
+            "Admin@123",
+            false,
             [UserRole.Administrator, UserRole.Manager, UserRole.User]
         ),
         (
-            new CustomUser
-            {
-                UserName = "manager@app.com",
-                Email = "manager@app.com"
-            },
-            "Manager@36",
+            "manager@app.com",
+            "Manager@123",
+            true,
             [UserRole.Manager, UserRole.User]
         ),
         (
-            new CustomUser
-            {
-                UserName = "user@app.com",
-                Email = "user@app.com",
-            },
-            "User@36",
+            "user@app.com",
+            "User@123",
+            true,
             [UserRole.User]
         )
     ];
@@ -63,15 +53,24 @@ public static class SeedData
                 throw new Exception($"Create roles failed: {FormatIdentityErrors(roleResult.Errors)}");
         }
 
-        foreach (var user in users)
+        foreach (var userData in users)
         {
-            if (await userManager.FindByEmailAsync(user.user.Email!) != null) continue;
+            if (await userManager.FindByEmailAsync(userData.Email) != null) continue;
 
-            var userResult = await userManager.CreateAsync(user.user, user.password);
+            var user = new CustomUser
+            {
+                UserName = userData.Email,
+                Email = userData.Email
+            };
+            var userResult = await userManager.CreateAsync(user, userData.Password);
             if (!userResult.Succeeded)
                 throw new Exception($"Create user failed: {FormatIdentityErrors(userResult.Errors)}");
 
-            var userRoleResult = await userManager.AddToRolesAsync(user.user, user.roles);
+            var lockoutResult = await userManager.SetLockoutEnabledAsync(user, userData.LockoutEnabled);
+            if (!lockoutResult.Succeeded)
+                throw new Exception($"Set lockout enabled failed: {FormatIdentityErrors(lockoutResult.Errors)}");
+
+            var userRoleResult = await userManager.AddToRolesAsync(user, userData.Roles);
             if (!userRoleResult.Succeeded)
                 throw new Exception($"Add roles to user failed: {FormatIdentityErrors(userRoleResult.Errors)}");
         }
