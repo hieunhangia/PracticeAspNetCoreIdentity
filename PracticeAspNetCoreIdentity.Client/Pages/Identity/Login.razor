@@ -2,8 +2,6 @@
 
 <h3>Login</h3>
 
-<p>@Message</p>
-
 @if (MessageCode == "RegistrationSuccessful")
 {
     <p>Registration successful. Please log in.</p>
@@ -29,6 +27,7 @@
 @using System.ComponentModel.DataAnnotations
 @inject IAccountManagement AccountManagement
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
 
 @code {
 
@@ -49,8 +48,6 @@
 
     [Required] public string Password { get; set; } = string.Empty;
 
-    private string? Message { get; set; }
-
     [SupplyParameterFromQuery(Name = "message-code")]
     private string? MessageCode { get; set; }
 
@@ -63,7 +60,7 @@
         }
         else
         {
-            Message = $"Login failed. {string.Join(",", result.ErrorList)}";
+            await JsRuntime.InvokeVoidAsync("alert", $"Login failed. {string.Join("\n", result.ErrorList)}");
         }
     }
 

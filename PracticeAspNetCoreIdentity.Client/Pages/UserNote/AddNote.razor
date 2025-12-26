@@ -4,7 +4,6 @@
 
 <AuthorizeView>
     <Authorized>
-        <p>@Message</p>
         <EditForm Model="@NewNote" OnValidSubmit="AddNoteAsync" Context="_">
             <DataAnnotationsValidator/>
             <div>
@@ -28,13 +27,13 @@
 @using PracticeAspNetCoreIdentity.Shared.Models
 @inject WebApiHttpClient WebApiHttpClient
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
 @code {
     private readonly CreateUpdateUserNoteRequest NewNote = new();
-    
-    private string? Message { get; set; }
-    
+
     private async Task AddNoteAsync()
-    { 
+    {
         var response = await WebApiHttpClient.AddNoteAsync(NewNote);
         if (response.IsSuccessStatusCode)
         {
@@ -42,7 +41,8 @@
         }
         else
         {
-            Message = "Error adding note.";
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to add note.");
         }
     }
+
 }

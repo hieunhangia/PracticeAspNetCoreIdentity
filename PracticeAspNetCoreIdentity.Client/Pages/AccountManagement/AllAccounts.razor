@@ -5,8 +5,6 @@
 
 <h3>All Accounts</h3>
 
-<p>@Message</p>
-
 <select @bind="OrderBy" @bind:after="ProcessOrderByChange">
     <option value="@AccountOrderBy.EmailAsc">Email Ascending</option>
     <option value="@AccountOrderBy.EmailDesc">Email Descending</option>
@@ -46,6 +44,7 @@
 
 @inject WebApiHttpClient WebApiHttpClient
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
 
 @code {
     private IEnumerable<AccountSummaryDto> Accounts { get; set; } = [];
@@ -54,8 +53,6 @@
     private int Page { get; set; } = 1;
     private static int PageSize => 10;
     private string OrderBy { get; set; } = AccountOrderBy.EmailAsc;
-
-    private string? Message { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,7 +63,7 @@
         }
         else
         {
-            Message = "Error loading total accounts";
+            await JsRuntime.InvokeVoidAsync("alert", "Error fetching account count.");
         }
 
         await LoadAccounts();
@@ -108,7 +105,7 @@
         }
         else
         {
-            Message = "Error loading accounts";
+            await JsRuntime.InvokeVoidAsync("alert", "Error fetching accounts.");
         }
     }
 

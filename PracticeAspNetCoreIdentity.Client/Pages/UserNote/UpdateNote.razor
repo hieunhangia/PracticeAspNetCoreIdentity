@@ -3,7 +3,6 @@
 
 <AuthorizeView>
     <Authorized>
-        <p>@Message</p>
         @if (IsLoadedNoteSuccessfully)
         {
             <EditForm Model="@UpdatingNote" OnValidSubmit="UpdateNoteAsync" Context="_">
@@ -30,16 +29,15 @@
 @using PracticeAspNetCoreIdentity.Shared.Models
 @inject WebApiHttpClient WebApiHttpClient
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+
 @code {
-    [Parameter]
-    public Guid NoteId { get; set; }
-    
+    [Parameter] public Guid NoteId { get; set; }
+
     private readonly CreateUpdateUserNoteRequest UpdatingNote = new();
 
     private bool IsLoadedNoteSuccessfully { get; set; }
-    
-    private string? Message { get; set; }
-    
+
     protected override async Task OnInitializedAsync()
     {
         var response = await WebApiHttpClient.GetNoteByIdAsync(NoteId);
@@ -51,17 +49,18 @@
                 UpdatingNote.Name = note.Name;
                 UpdatingNote.Content = note.Content;
             }
+
             IsLoadedNoteSuccessfully = true;
         }
         else
         {
-            Message = "Error retrieving note.";
+            await JsRuntime.InvokeVoidAsync("alert", "Error fetching the note.");
             IsLoadedNoteSuccessfully = false;
         }
     }
-    
+
     private async Task UpdateNoteAsync()
-    { 
+    {
         var response = await WebApiHttpClient.UpdateNoteAsync(NoteId, UpdatingNote);
         if (response.IsSuccessStatusCode)
         {
@@ -69,7 +68,8 @@
         }
         else
         {
-            Message = "Error updating note.";
+            await JsRuntime.InvokeVoidAsync("alert", "Error updating the note.");
         }
     }
+
 }

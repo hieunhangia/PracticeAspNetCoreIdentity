@@ -2,8 +2,6 @@
 
 <h3>Register</h3>
 
-<p>@Message</p>
-
 <EditForm Model="@this" OnValidSubmit="RegisterAsync">
     <DataAnnotationsValidator/>
 
@@ -30,6 +28,7 @@
 @using System.ComponentModel.DataAnnotations
 @inject IAccountManagement AccountManagement
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 @code {
 
@@ -54,8 +53,6 @@
     [Compare("Password", ErrorMessage = "Passwords do not match.")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    private string? Message { get; set; }
-
     private async Task RegisterAsync()
     {
         var result = await AccountManagement.RegisterAsync(Email, Password);
@@ -65,7 +62,7 @@
         }
         else
         {
-            Message = $"Registration failed: {string.Join(", ", result.ErrorList)}";
+            await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.ErrorList));
         }
     }
 
