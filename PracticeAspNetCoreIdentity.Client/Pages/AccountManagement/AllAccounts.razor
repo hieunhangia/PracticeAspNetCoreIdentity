@@ -1,0 +1,115 @@
+@using Microsoft.AspNetCore.Authorization
+@using PracticeAspNetCoreIdentity.Shared.Models
+@attribute [Route(Constants.Route.AdminAllAccounts)]
+@attribute [Authorize(Roles = UserRole.Administrator)]
+
+<h3>All Accounts</h3>
+
+<p>@Message</p>
+
+<select @bind="OrderBy" @bind:after="ProcessOrderByChange">
+    <option value="@AccountOrderBy.EmailAsc">Email Ascending</option>
+    <option value="@AccountOrderBy.EmailDesc">Email Descending</option>
+    <option value="@AccountOrderBy.LockedOutAsc">Locked Out Ascending</option>
+    <option value="@AccountOrderBy.LockedOutDesc">Locked Out Descending</option>
+</select>
+
+<table>
+    <tr>
+        <th>Email</th>
+        <th>Locked Out</th>
+        <th>Action</th>
+    </tr>
+    @foreach (var account in Accounts)
+    {
+        <tr>
+            <td>@account.Email</td>
+            <td>@account.LockedOut</td>
+            <td>
+                <button @onclick="() => NavigateToAccountDetail(account.Id)">Detail</button>
+            </td>
+        </tr>
+    }
+</table>
+<p>Total Account: @TotalAccounts</p>
+
+@if (Page > 1)
+{
+    <button @onclick="PreviousPage">Previous</button>
+}
+<span>@Page/@((int)Math.Ceiling((double)TotalAccounts / PageSize))</span>
+
+@if ((Page * PageSize) < TotalAccounts)
+{
+    <button @onclick="NextPage">Next</button>
+}
+
+@inject WebApiHttpClient WebApiHttpClient
+@inject NavigationManager NavigationManager
+
+@code {
+    private IEnumerable<AccountSummaryDto> Accounts { get; set; } = [];
+    private int TotalAccounts { get; set; }
+
+    private int Page { get; set; } = 1;
+    private static int PageSize => 10;
+    private string OrderBy { get; set; } = AccountOrderBy.EmailAsc;
+
+    private string? Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var totalResponse = await WebApiHttpClient.GetAccountCountAsync();
+        if (totalResponse.IsSuccessStatusCode)
+        {
+            TotalAccounts = await totalResponse.Content.ReadFromJsonAsync<int>();
+        }
+        else
+        {
+            Message = "Error loading total accounts";
+        }
+
+        await LoadAccounts();
+    }
+
+    private void NavigateToAccountDetail(Guid accountId) => NavigationManager.NavigateTo($"{Constants.Route.AdminAccountDetail}/{accountId}");
+
+    private async Task ProcessOrderByChange()
+    {
+        Page = 1;
+        await LoadAccounts();
+    }
+
+    private async Task NextPage()
+    {
+        if (Page * PageSize < TotalAccounts)
+        {
+            Page++;
+            await LoadAccounts();
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (Page > 1)
+        {
+            Page--;
+            await LoadAccounts();
+        }
+    }
+
+    private async Task LoadAccounts()
+    {
+        var response = await WebApiHttpClient.GetAllAccountsAsync(Page, PageSize, OrderBy);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Accounts = await response.Content.ReadFromJsonAsync<IEnumerable<AccountSummaryDto>>() ?? [];
+        }
+        else
+        {
+            Message = "Error loading accounts";
+        }
+    }
+
+}

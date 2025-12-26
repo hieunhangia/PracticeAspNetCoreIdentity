@@ -1,0 +1,89 @@
+@using Microsoft.AspNetCore.Authorization
+@using PracticeAspNetCoreIdentity.Shared.Models
+@attribute [Route($"{Constants.Route.AdminAccountDetail}/{{AccountId:guid}}")]
+@attribute [Authorize(Roles = UserRole.Administrator)]
+
+<h3>AccountDetail</h3>
+<p>@Message</p>
+
+<div>
+    <p>Id: @Account.Id</p>
+    <p>Email: @Account.Email</p>
+    <p>Email @(Account.EmailConfirmed ? "Confirmed" : "Not Confirmed")</p>
+    <p>Lockout @(Account.LockoutEnabled ? "Enabled" : "Not Enabled")</p>
+    @if (Account.LockoutEnabled)
+    {
+        <p>Access Failed @Account.AccessFailedCount Time</p>
+        @if (Account.LockoutEnd != null && Account.LockoutEnd > DateTimeOffset.UtcNow)
+        {
+            <p>Locked Out End At: @Account.LockoutEnd</p>
+            <button @onclick="UnlockAccountAsync">Unlock</button>
+        }
+        else
+        {
+            <button @onclick="LockOutAccountAsync">Lock Out</button>
+            <p>Locked Out: No</p>
+        }
+    }
+</div>
+
+
+@inject WebApiHttpClient WebApiHttpClient
+@inject IJSRuntime JsRuntime
+
+@code {
+    [Parameter] public Guid AccountId { get; set; }
+
+    private AccountDetailDto Account { get; set; } = new();
+
+    private string? Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await WebApiHttpClient.GetAccountByIdAsync(AccountId);
+        if (response.IsSuccessStatusCode)
+        {
+            Account = await response.Content.ReadFromJsonAsync<AccountDetailDto>() ?? new AccountDetailDto();
+        }
+        else
+        {
+            Message = "Error loading account details";
+        }
+    }
+
+    private async Task LockOutAccountAsync()
+    {
+        var lockoutTimeInSecondString = await JsRuntime.InvokeAsync<string>("prompt", "Enter lockout time in seconds:", "60");
+        if (!long.TryParse(lockoutTimeInSecondString, out var lockoutTimeInSecond) || lockoutTimeInSecond <= 0)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Invalid lockout time.");
+            return;
+        }
+
+        var response = await WebApiHttpClient.LockOutAccountAsync(AccountId, lockoutTimeInSecond);
+        if (response.IsSuccessStatusCode)
+        {
+            Message = "Account locked successfully";
+            await OnInitializedAsync();
+        }
+        else
+        {
+            Message = "Error locking account";
+        }
+    }
+
+    private async Task UnlockAccountAsync()
+    {
+        var response = await WebApiHttpClient.UnlockAccountAsync(AccountId);
+        if (response.IsSuccessStatusCode)
+        {
+            Message = "Account unlocked successfully";
+            await OnInitializedAsync();
+        }
+        else
+        {
+            Message = "Error unlocking account";
+        }
+    }
+
+}

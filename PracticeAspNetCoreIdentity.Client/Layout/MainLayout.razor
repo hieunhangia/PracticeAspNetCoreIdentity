@@ -6,6 +6,9 @@
         <AuthorizeView>
             <Authorized>
                 Logged in as @context.User.Identity?.Name.
+                <AuthorizeView Roles="@UserRole.Administrator" Context="_">
+                    <button @onclick="NavigateToAllAccounts">All Accounts</button>
+                </AuthorizeView>
                 <button @onclick="NavigateToAllNote">All Notes</button>
                 <button @onclick="LogoutAsync">Logout</button>
             </Authorized>
@@ -35,6 +38,9 @@
     private void NavigateToLogin() => NavigationManager.NavigateTo(Constants.Route.Login);
 
     private void NavigateToRegister() => NavigationManager.NavigateTo(Constants.Route.Register);
-    
+
+    private void NavigateToAllAccounts() => NavigationManager.NavigateTo(Constants.Route.AdminAllAccounts);
+
     private void NavigateToAllNote() => NavigationManager.NavigateTo(Constants.Route.AllNotes);
+
 }
