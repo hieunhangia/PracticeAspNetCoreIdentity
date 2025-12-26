@@ -8,27 +8,43 @@ public static class SeedData
 {
     private static readonly string[] roles = [UserRole.Administrator, UserRole.Manager, UserRole.User];
 
-    private static readonly (string Email, string Password, bool LockoutEnabled, string[] Roles)[] users =
-    [
-        (
-            "admin@app.com",
-            "Admin@123",
-            false,
-            [UserRole.Administrator, UserRole.Manager, UserRole.User]
-        ),
-        (
-            "manager@app.com",
-            "Manager@123",
-            true,
-            [UserRole.Manager, UserRole.User]
-        ),
-        (
-            "user@app.com",
-            "User@123",
-            true,
-            [UserRole.User]
-        )
-    ];
+    private static IEnumerable<(string Email, string Password, bool LockoutEnabled, string[] Roles)> GetUsers()
+    {
+        ICollection<(string Email, string Password, bool LockoutEnabled, string[] Roles)> users =
+        [
+            (
+                "admin@app.com",
+                "Admin@123",
+                false,
+                [UserRole.Administrator, UserRole.Manager, UserRole.User]
+            ),
+            (
+                "manager@app.com",
+                "Manager@123",
+                true,
+                [UserRole.Manager, UserRole.User]
+            ),
+            (
+                "user@app.com",
+                "User@123",
+                true,
+                [UserRole.User]
+            )
+        ];
+        for (var i = 1; i <= 36; i++)
+        {
+            var item = new ValueTuple<string, string, bool, string[]>
+            {
+                Item1 = "user" + i + "@app.com",
+                Item2 = "User" + i + "@123",
+                Item3 = true,
+                Item4 = [UserRole.User]
+            };
+            users.Add(item);
+        }
+
+        return users;
+    }
 
     public static async Task InitializeAsync(IServiceProvider appService, bool dropExistDatabase = false)
     {
@@ -53,7 +69,7 @@ public static class SeedData
                 throw new Exception($"Create roles failed: {FormatIdentityErrors(roleResult.Errors)}");
         }
 
-        foreach (var userData in users)
+        foreach (var userData in GetUsers())
         {
             if (await userManager.FindByEmailAsync(userData.Email) != null) continue;
 
