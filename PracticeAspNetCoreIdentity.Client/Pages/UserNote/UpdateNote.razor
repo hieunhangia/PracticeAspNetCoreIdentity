@@ -1,4 +1,4 @@
-@attribute [Route(Constants.Route.UpdateNote + "/{NoteId:guid}")]
+@attribute [Route($"{Constants.Route.UpdateNote}/{{NoteId:guid}}")]
 <h3>Update Note</h3>
 
 <AuthorizeView>

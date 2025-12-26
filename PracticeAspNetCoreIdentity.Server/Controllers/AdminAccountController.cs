@@ -22,8 +22,6 @@ public class AccountManagementController(UserManager<CustomUser> userManager, Ap
         var users = userManager.Users;
         users = orderBy switch
         {
-            AccountOrderBy.IdAsc => users.OrderBy(u => u.Id),
-            AccountOrderBy.IdDesc => users.OrderByDescending(u => u.Id),
             AccountOrderBy.EmailAsc => users.OrderBy(u => u.Email),
             AccountOrderBy.EmailDesc => users.OrderByDescending(u => u.Email),
             AccountOrderBy.LockedOutAsc => users.OrderBy(u => u.LockoutEnd),
@@ -50,11 +48,14 @@ public class AccountManagementController(UserManager<CustomUser> userManager, Ap
     {
         var user = await userManager.FindByIdAsync(id.ToString());
         return user != null
-            ? Ok(new AccountSummaryDto
+            ? Ok(new AccountDetailDto
             {
                 Id = user.Id,
                 Email = user.Email,
-                LockedOut = user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now
+                EmailConfirmed = user.EmailConfirmed,
+                LockoutEnabled =  user.LockoutEnabled,
+                AccessFailedCount =  user.AccessFailedCount,
+                LockoutEnd = user.LockoutEnd
             })
             : NotFound();
     }
