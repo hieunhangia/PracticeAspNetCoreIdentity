@@ -75,7 +75,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapIdentityApiCustom();
+app.MapIdentityApi();
 
 
 app.Run();

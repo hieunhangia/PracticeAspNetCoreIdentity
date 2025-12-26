@@ -34,7 +34,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
     /// Call <see cref="EndpointRouteBuilderExtensions.MapGroup(IEndpointRouteBuilder, string)"/> to add a prefix to all the endpoints.
     /// </param>
     /// <returns>An <see cref="IEndpointConventionBuilder"/> to further customize the added endpoints.</returns>
-    public static IEndpointConventionBuilder MapIdentityApiCustom(this IEndpointRouteBuilder endpoints)
+    public static IEndpointConventionBuilder MapIdentityApi(this IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
 
@@ -60,7 +60,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             if (!userManager.SupportsUserEmail)
             {
                 throw new NotSupportedException(
-                    $"{nameof(MapIdentityApiCustom)} requires a user store with email support.");
+                    $"{nameof(MapIdentityApi)} requires a user store with email support.");
             }
 
             var emailStore = (IUserEmailStore<CustomUser>)userStore;
@@ -217,7 +217,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             .Add(endpointBuilder =>
             {
                 var finalPattern = ((RouteEndpointBuilder)endpointBuilder).RoutePattern.RawText;
-                confirmEmailEndpointName = $"{nameof(MapIdentityApiCustom)}-{finalPattern}";
+                confirmEmailEndpointName = $"{nameof(MapIdentityApi)}-{finalPattern}";
                 endpointBuilder.Metadata.Add(new EndpointNameMetadata(confirmEmailEndpointName));
             });
 
