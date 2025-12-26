@@ -60,7 +60,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, Ap
             : NotFound();
     }
 
-    [HttpPatch("lockout/{id:guid}")]
+    [HttpPost("{id:guid}/lockout")]
     public async Task<IActionResult> LockoutAccountAsync(Guid id, [FromBody] long lockoutTimeInSecond)
     {
         var user = await userManager.FindByIdAsync(id.ToString());
@@ -80,7 +80,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, Ap
         return NoContent();
     }
 
-    [HttpPatch("unlock/{id:guid}")]
+    [HttpPost("{id:guid}/unlock")]
     public async Task<IActionResult> UnlockAccountAsync(Guid id)
     {
         var user = await userManager.FindByIdAsync(id.ToString());
