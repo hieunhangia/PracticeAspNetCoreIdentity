@@ -9,27 +9,26 @@ namespace PracticeAspNetCoreIdentity.Server.Controllers;
 
 [ApiController]
 [Route("notes")]
+[Authorize]
 public class UserNoteController(AppDbContext context) : ControllerBase
 {
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> GetUserNotesAsync()
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var userNote = await context.UserNotes
             .Where(u => u.UserId == userId)
-            .Select(u => new UserNoteDto 
+            .Select(u => new UserNoteDto
             {
                 Id = u.Id,
-                Name = u.Name, 
+                Name = u.Name,
                 Content = u.Content
             })
             .ToListAsync();
         return Ok(userNote);
     }
-    
+
     [HttpGet]
-    [Authorize]
     [Route("{id:guid}")]
     public async Task<IActionResult> GetUserNoteByIdAsync(Guid id)
     {
@@ -47,7 +46,6 @@ public class UserNoteController(AppDbContext context) : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> AddUserNoteAsync([FromBody] CreateUpdateUserNoteRequest request)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -58,7 +56,6 @@ public class UserNoteController(AppDbContext context) : ControllerBase
     }
 
     [HttpPut]
-    [Authorize]
     [Route("{id:guid}")]
     public async Task<IActionResult> UpdateUserNoteAsync(Guid id, [FromBody] CreateUpdateUserNoteRequest request)
     {
@@ -73,7 +70,6 @@ public class UserNoteController(AppDbContext context) : ControllerBase
     }
 
     [HttpDelete]
-    [Authorize]
     [Route("{id:guid}")]
     public async Task<IActionResult> DeleteUserNoteAsync(Guid id)
     {
