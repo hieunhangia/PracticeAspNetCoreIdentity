@@ -26,7 +26,11 @@
 {
     private void NavigateToHome() => NavigationManager.NavigateTo(Constants.Route.Home);
 
-    private async Task LogoutAsync() => await AccountManagement.LogoutAsync();
+    private async Task LogoutAsync()
+    {
+        await AccountManagement.LogoutAsync();
+        NavigateToHome();
+    }
 
     private void NavigateToLogin() => NavigationManager.NavigateTo(Constants.Route.Login);
 
