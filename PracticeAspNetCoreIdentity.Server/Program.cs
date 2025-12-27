@@ -2,6 +2,7 @@ using FluentEmail.MailKitSmtp;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server;
+using PracticeAspNetCoreIdentity.Server.Identity;
 using PracticeAspNetCoreIdentity.Server.Models;
 using Scalar.AspNetCore;
 

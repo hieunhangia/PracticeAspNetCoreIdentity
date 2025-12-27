@@ -16,7 +16,7 @@ using Microsoft.Extensions.Options;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
 
-namespace PracticeAspNetCoreIdentity.Server;
+namespace PracticeAspNetCoreIdentity.Server.Identity;
 
 /// <summary>
 /// Provides extension methods for <see cref="IEndpointRouteBuilder"/> to add identity endpoints.
