@@ -1,5 +1,4 @@
 @using Microsoft.AspNetCore.Authorization
-@using PracticeAspNetCoreIdentity.Shared.Models
 @attribute [Route($"{Constants.Route.AdminAccountDetail}/{{AccountId:guid}}")]
 @attribute [Authorize(Roles = UserRole.Administrator)]
 
