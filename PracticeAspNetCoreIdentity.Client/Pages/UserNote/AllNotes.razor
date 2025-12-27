@@ -15,13 +15,13 @@
                     <td>@userNote.Name</td>
                     <td>@userNote.Content</td>
                     <td>
-                        <button @onclick="() => NavigateToUpdateNote(userNote.Id)">Update Note</button>
+                        <a href="@Constants.Route.UpdateNote/@userNote.Id">Update Note</a>
                         <button @onclick="() => DeleteNote(userNote.Id)">Delete Note</button>
                     </td>
                 </tr>
             }
         </table>
-        <button @onclick="NavigateToAddNote">Add Note</button>
+        <a href="@Constants.Route.AddNote">Add New Note</a>
     </Authorized>
     <NotAuthorized>
         <p>You need to be logged in to view this page.</p>
@@ -30,7 +30,6 @@
 
 @using PracticeAspNetCoreIdentity.Shared.Models
 @inject WebApiHttpClient WebApiHttpClient
-@inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 
 @code {
@@ -48,10 +47,6 @@
             await JsRuntime.InvokeVoidAsync("alert", "Error fetching notes.");
         }
     }
-
-    private void NavigateToAddNote() => NavigationManager.NavigateTo(Constants.Route.AddNote);
-
-    private void NavigateToUpdateNote(Guid noteId) => NavigationManager.NavigateTo($"{Constants.Route.UpdateNote}/{noteId}");
 
     private async Task DeleteNote(Guid noteId)
     {

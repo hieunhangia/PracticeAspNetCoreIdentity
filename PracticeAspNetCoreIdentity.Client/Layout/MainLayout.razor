@@ -2,19 +2,19 @@
 
 <div class="page">
     <div class="top-row px-4">
-        <button @onclick="NavigateToHome">Home</button>
+        <a href="@Constants.Route.Home">Home</a>
         <AuthorizeView>
             <Authorized>
                 Logged in as @context.User.Identity?.Name.
                 <AuthorizeView Roles="@UserRole.Administrator" Context="_">
-                    <button @onclick="NavigateToAllAccounts">All Accounts</button>
+                    <a href="@Constants.Route.AdminAllAccounts">Manage Accounts</a>
                 </AuthorizeView>
-                <button @onclick="NavigateToAllNote">All Notes</button>
+                <a href="@Constants.Route.AllNotes">My Notes</a>
                 <button @onclick="LogoutAsync">Logout</button>
             </Authorized>
             <NotAuthorized>
-                <button @onclick="NavigateToLogin">Login</button>
-                <button @onclick="NavigateToRegister">Register</button>
+                <a href="@Constants.Route.Login">Login</a>
+                <a href="@Constants.Route.Register">Register</a>
             </NotAuthorized>
         </AuthorizeView>
     </div>
@@ -27,20 +27,11 @@
 
 @code
 {
-    private void NavigateToHome() => NavigationManager.NavigateTo(Constants.Route.Home);
 
     private async Task LogoutAsync()
     {
         await AccountManagement.LogoutAsync();
-        NavigateToHome();
+        NavigationManager.NavigateTo(Constants.Route.Home);
     }
-
-    private void NavigateToLogin() => NavigationManager.NavigateTo(Constants.Route.Login);
-
-    private void NavigateToRegister() => NavigationManager.NavigateTo(Constants.Route.Register);
-
-    private void NavigateToAllAccounts() => NavigationManager.NavigateTo(Constants.Route.AdminAllAccounts);
-
-    private void NavigateToAllNote() => NavigationManager.NavigateTo(Constants.Route.AllNotes);
 
 }

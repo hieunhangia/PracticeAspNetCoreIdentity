@@ -2,11 +2,6 @@
 
 <h3>Login</h3>
 
-@if (MessageCode == "RegistrationSuccessful")
-{
-    <p>Registration successful. Please log in.</p>
-}
-
 <EditForm Model="@this" OnValidSubmit="LoginAsync">
     <DataAnnotationsValidator/>
 
@@ -47,9 +42,6 @@
     [Required] [EmailAddress] public string Email { get; set; } = string.Empty;
 
     [Required] public string Password { get; set; } = string.Empty;
-
-    [SupplyParameterFromQuery(Name = "message-code")]
-    private string? MessageCode { get; set; }
 
     private async Task LoginAsync()
     {

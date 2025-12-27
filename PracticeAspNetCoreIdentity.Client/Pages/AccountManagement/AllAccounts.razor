@@ -24,7 +24,7 @@
             <td>@account.Email</td>
             <td>@account.LockedOut</td>
             <td>
-                <button @onclick="() => NavigateToAccountDetail(account.Id)">Detail</button>
+                <a href="@Constants.Route.AdminAccountDetail/@account.Id">Details</a>
             </td>
         </tr>
     }
@@ -43,7 +43,6 @@
 }
 
 @inject WebApiHttpClient WebApiHttpClient
-@inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 
 @code {
@@ -68,8 +67,6 @@
 
         await LoadAccounts();
     }
-
-    private void NavigateToAccountDetail(Guid accountId) => NavigationManager.NavigateTo($"{Constants.Route.AdminAccountDetail}/{accountId}");
 
     private async Task ProcessOrderByChange()
     {
