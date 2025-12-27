@@ -50,7 +50,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
             return new ApiResult
             {
                 Succeeded = false,
-                ErrorList = ["Invalid email or password."]
+                ErrorList = ["Login failed."]
             };
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         return new ApiResult { Succeeded = true };
@@ -75,8 +75,8 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 
     public async Task<ApiResult> CookieLogoutAsync()
     {
-        var result = await webApiHttpClient.CookieLogoutAsync();
-        if (!result.IsSuccessStatusCode)
+        using var response = await webApiHttpClient.CookieLogoutAsync();
+        if (!response.IsSuccessStatusCode)
         {
             return new ApiResult
             {
@@ -87,5 +87,17 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         return new ApiResult { Succeeded = true };
+    }
+
+    public async Task<ApiResult> ResendConfirmationEmailAsync(string email)
+    {
+        using var response = await webApiHttpClient.ResendConfirmationEmailAsync(email);
+        if (response.IsSuccessStatusCode) return new ApiResult { Succeeded = true };
+
+        return new ApiResult
+        {
+            Succeeded = false,
+            ErrorList = ["Failed to resend confirmation email."]
+        };
     }
 }

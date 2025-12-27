@@ -7,4 +7,5 @@ public interface IAccountManagement
     Task<ApiResult> CookieLoginAsync(string email, string password);
     Task<ApiResult> RegisterAsync(string email, string password);
     Task<ApiResult> CookieLogoutAsync();
+    Task<ApiResult> ResendConfirmationEmailAsync(string email);
 }

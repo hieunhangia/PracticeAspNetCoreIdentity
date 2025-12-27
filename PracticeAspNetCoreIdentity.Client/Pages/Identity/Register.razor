@@ -36,7 +36,6 @@
 
 @using System.ComponentModel.DataAnnotations
 @inject IAccountManagement AccountManagement
-@inject WebApiHttpClient WebApiHttpClient
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
@@ -80,8 +79,8 @@
 
     private async Task ResendConfirmationEmailAsync()
     {
-        var result = await WebApiHttpClient.ResendConfirmationEmailAsync(Email);
-        if (result.IsSuccessStatusCode)
+        var result = await AccountManagement.ResendConfirmationEmailAsync(Email);
+        if (result.Succeeded)
         {
             await JSRuntime.InvokeVoidAsync("alert", "Confirmation email resent. Please check your email.");
         }
