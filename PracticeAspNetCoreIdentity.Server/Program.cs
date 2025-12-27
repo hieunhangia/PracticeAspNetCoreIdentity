@@ -1,3 +1,4 @@
+using FluentEmail.MailKitSmtp;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server;
@@ -9,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -20,6 +21,16 @@ builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<CustomUser>()
     .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>();
+
+builder.Services.AddFluentEmail(builder.Configuration["EmailAddress"], builder.Configuration["EmailDisplayName"])
+    .AddMailKitSender(new SmtpClientOptions
+    {
+        Server = builder.Configuration["SmtpServer"],
+        Port = int.Parse(builder.Configuration["SmtpPort"]!),
+        User = builder.Configuration["SmtpUser"],
+        Password = builder.Configuration["SmtpPassword"],
+        RequiresAuthentication = true
+    });
 
 builder.Services.AddTransient<IEmailSender<CustomUser>, EmailSender>();
 
