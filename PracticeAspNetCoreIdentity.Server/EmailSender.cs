@@ -5,7 +5,7 @@ using PracticeAspNetCoreIdentity.Server.Models;
 
 namespace PracticeAspNetCoreIdentity.Server;
 
-public class EmailSender(IConfiguration configuration) : IEmailSender<CustomUser>
+public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
 {
     public Task SendConfirmationLinkAsync(CustomUser user, string email, string confirmationLink)
         => SendEmailAsync(email, "Confirm your email",
@@ -21,27 +21,13 @@ public class EmailSender(IConfiguration configuration) : IEmailSender<CustomUser
 
     private async Task SendEmailAsync(string toEmail, string subject, string message)
     {
-        var email = new Email(configuration["EmailAddress"], configuration["EmailDisplayName"])
-        {
-            Sender = new MailKitSender(new SmtpClientOptions
-            {
-                Server = configuration["SmtpServer"],
-                Port = int.Parse(configuration["SmtpPort"]!),
-                User = configuration["SmtpUser"],
-                Password = configuration["SmtpPassword"],
-                RequiresAuthentication = true
-            })
-        };
-
-        var response = await email
+        var response = await fluentEmail
             .To(toEmail)
             .Subject(subject)
             .Body(message)
             .SendAsync();
 
         if (!response.Successful)
-        {
             throw new Exception("Failed to send email: " + string.Join(", ", response.ErrorMessages));
-        }
     }
 }

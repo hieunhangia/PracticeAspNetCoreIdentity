@@ -40,7 +40,6 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         var timeProvider = endpoints.ServiceProvider.GetRequiredService<TimeProvider>();
         var bearerTokenOptions = endpoints.ServiceProvider.GetRequiredService<IOptionsMonitor<BearerTokenOptions>>();
-        var emailSender = endpoints.ServiceProvider.GetRequiredService<IEmailSender<CustomUser>>();
         var linkGenerator = endpoints.ServiceProvider.GetRequiredService<LinkGenerator>();
 
         // We'll figure out a unique endpoint name based on the final route pattern during endpoint generation.
@@ -54,6 +53,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             HttpContext context,
             UserManager<CustomUser> userManager,
             IUserStore<CustomUser> userStore,
+            IEmailSender<CustomUser> emailSender,
             AppDbContext dbContext
         ) =>
         {
@@ -99,7 +99,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 throw new InvalidOperationException("An error occurred creating the user.", e);
             }
 
-            await SendConfirmationEmailAsync(user, userManager, context, email);
+            await SendConfirmationEmailAsync(user, userManager, context, emailSender, email);
             return TypedResults.Ok();
         });
 
@@ -225,7 +225,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         (
             [FromBody] ResendConfirmationEmailRequest resendRequest,
             HttpContext context,
-            UserManager<CustomUser> userManager
+            UserManager<CustomUser> userManager,
+            IEmailSender<CustomUser> emailSender
         ) =>
         {
             if (await userManager.FindByEmailAsync(resendRequest.Email) is not { } user)
@@ -233,14 +234,15 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return TypedResults.Ok();
             }
 
-            await SendConfirmationEmailAsync(user, userManager, context, resendRequest.Email);
+            await SendConfirmationEmailAsync(user, userManager, context, emailSender, resendRequest.Email);
             return TypedResults.Ok();
         });
 
         routeGroup.MapPost("/forgotPassword", async Task<Results<Ok, ValidationProblem>>
         (
             [FromBody] ForgotPasswordRequest resetRequest,
-            UserManager<CustomUser> userManager
+            UserManager<CustomUser> userManager,
+            IEmailSender<CustomUser> emailSender
         ) =>
         {
             var user = await userManager.FindByEmailAsync(resetRequest.Email);
@@ -395,7 +397,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             ClaimsPrincipal claimsPrincipal,
             [FromBody] InfoRequest infoRequest,
             HttpContext context,
-            UserManager<CustomUser> userManager
+            UserManager<CustomUser> userManager,
+            IEmailSender<CustomUser> emailSender
         ) =>
         {
             if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
@@ -431,7 +434,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
                 if (email != infoRequest.NewEmail)
                 {
-                    await SendConfirmationEmailAsync(user, userManager, context, infoRequest.NewEmail, isChange: true);
+                    await SendConfirmationEmailAsync(user, userManager, context, emailSender, infoRequest.NewEmail,
+                        isChange: true);
                 }
             }
 
@@ -459,7 +463,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         return new IdentityEndpointsConventionBuilder(routeGroup);
 
         async Task SendConfirmationEmailAsync(CustomUser user, UserManager<CustomUser> userManager, HttpContext context,
-            string email, bool isChange = false)
+            IEmailSender<CustomUser> emailSender, string email, bool isChange = false)
         {
             if (confirmEmailEndpointName is null)
             {
