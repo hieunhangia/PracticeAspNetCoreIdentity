@@ -229,12 +229,12 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             IEmailSender<CustomUser> emailSender
         ) =>
         {
-            if (await userManager.FindByEmailAsync(resendRequest.Email) is not { } user)
+            if (await userManager.FindByEmailAsync(resendRequest.Email) is { } user
+                && !await userManager.IsEmailConfirmedAsync(user))
             {
-                return TypedResults.Ok();
+                await SendConfirmationEmailAsync(user, userManager, context, emailSender, resendRequest.Email);
             }
 
-            await SendConfirmationEmailAsync(user, userManager, context, emailSender, resendRequest.Email);
             return TypedResults.Ok();
         });
 
