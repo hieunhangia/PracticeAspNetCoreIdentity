@@ -1,5 +1,4 @@
 using FluentEmail.Core;
-using FluentEmail.MailKitSmtp;
 using Microsoft.AspNetCore.Identity;
 using PracticeAspNetCoreIdentity.Server.Models;
 
