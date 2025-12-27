@@ -8,15 +8,32 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
 {
     public Task SendConfirmationLinkAsync(CustomUser user, string email, string confirmationLink)
         => SendEmailAsync(email, "Confirm your email",
-            $"<html lang=\"en\"><head></head><body>Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.</body></html>");
+            $"""
+             <html lang="en">
+             <head>
+             </head>
+             <body>
+                Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.
+                <p>Link will expire in 1 day.</p>
+             </body>
+             </html>
+             """);
 
     public Task SendPasswordResetLinkAsync(CustomUser user, string email, string resetLink)
-        => SendEmailAsync(email, "Reset your password",
-            $"<html lang=\"en\"><head></head><body>Please reset your password by <a href='{resetLink}'>clicking here</a>.</body></html>");
+        => Task.CompletedTask; // Redundant method when using MapIdentityApi
 
     public Task SendPasswordResetCodeAsync(CustomUser user, string email, string resetCode)
         => SendEmailAsync(email, "Reset your password",
-            $"<html lang=\"en\"><head></head><body>Please reset your password using the following code:<br>{resetCode}</body></html>");
+            $"""
+             <html lang="en">
+             <head>
+             </head>
+             <body>
+                Please reset your password using the following code:<br>{resetCode}
+                <p>Code will expire in 1 minute.</p>
+             </body>
+             </html>
+             """);
 
     private async Task SendEmailAsync(string toEmail, string subject, string message)
     {
