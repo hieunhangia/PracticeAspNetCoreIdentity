@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
 using PracticeAspNetCoreIdentity.Shared.Models;
@@ -11,7 +12,7 @@ namespace PracticeAspNetCoreIdentity.Server.Controllers;
 [ApiController]
 [Route("accounts")]
 [Authorize(Roles = UserRole.Administrator)]
-public class AccountManagementController(UserManager<CustomUser> userManager, AppDbContext context) : ControllerBase
+public class AccountManagementController(UserManager<CustomUser> userManager, IDistributedCache cache) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllAccountsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10,
@@ -24,8 +25,8 @@ public class AccountManagementController(UserManager<CustomUser> userManager, Ap
         {
             AccountOrderBy.EmailAsc => users.OrderBy(u => u.Email),
             AccountOrderBy.EmailDesc => users.OrderByDescending(u => u.Email),
-            AccountOrderBy.LockedOutAsc => users.OrderBy(u => u.LockoutEnd),
-            AccountOrderBy.LockedOutDesc => users.OrderByDescending(u => u.LockoutEnd),
+            AccountOrderBy.BanAsc => users.OrderBy(u => u.LockoutEnd),
+            AccountOrderBy.BanDesc => users.OrderByDescending(u => u.LockoutEnd),
             _ => users.OrderBy(u => u.Email)
         };
         return Ok(await users
@@ -35,7 +36,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, Ap
             {
                 Id = user.Id,
                 Email = user.Email,
-                LockedOut = user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now
+                BanStatus = user.BanEnabled && user.BanEnd > DateTimeOffset.Now
             })
             .ToListAsync());
     }
@@ -53,41 +54,43 @@ public class AccountManagementController(UserManager<CustomUser> userManager, Ap
                 Id = user.Id,
                 Email = user.Email,
                 EmailConfirmed = user.EmailConfirmed,
-                LockoutEnabled =  user.LockoutEnabled,
-                AccessFailedCount =  user.AccessFailedCount,
-                LockoutEnd = user.LockoutEnd
+                BanEnabled = user.BanEnabled,
+                BanEnd = user.BanEnd
             })
             : NotFound();
     }
 
-    [HttpPost("{id:guid}/lockout")]
-    public async Task<IActionResult> LockoutAccountAsync(Guid id, [FromBody] long lockoutTimeInSecond)
+    [HttpPost("{id:guid}/ban")]
+    public async Task<IActionResult> LockoutAccountAsync(Guid id, [FromBody] BanUserRequest request)
     {
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user == null) return NotFound();
 
-        if (lockoutTimeInSecond < 0) lockoutTimeInSecond = 0;
+        if (!user.BanEnabled) return BadRequest("This account cannot be banned.");
 
-        await using var transaction = await context.Database.BeginTransactionAsync();
-        var lockOutResult =
-            await userManager.SetLockoutEndDateAsync(user, DateTimeOffset.Now.AddSeconds(lockoutTimeInSecond));
-        if (!lockOutResult.Succeeded) return BadRequest(lockOutResult.Errors);
-
-        var updateResult = await userManager.UpdateSecurityStampAsync(user);
-        if (!updateResult.Succeeded) return BadRequest(updateResult.Errors);
-
-        await transaction.CommitAsync();
+        user.BanEnd = DateTimeOffset.Now.AddSeconds(request.BanTimeInSeconds);
+        await userManager.UpdateAsync(user);
+        await userManager.UpdateSecurityStampAsync(user);
+        await cache.SetStringAsync(
+            $"banned_{user.Id}",
+            "banned",
+            new DistributedCacheEntryOptions { AbsoluteExpiration = user.BanEnd }
+        );
         return NoContent();
     }
 
-    [HttpPost("{id:guid}/unlock")]
+    [HttpPost("{id:guid}/unban")]
     public async Task<IActionResult> UnlockAccountAsync(Guid id)
     {
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user == null) return NotFound();
 
-        var result = await userManager.SetLockoutEndDateAsync(user, null);
-        if (!result.Succeeded) return BadRequest(result.Errors);
+        if (user.BanEnd == null || user.BanEnd <= DateTimeOffset.Now)
+            return BadRequest("This account is not currently banned.");
+
+        user.BanEnd = null;
+        await userManager.UpdateAsync(user);
+        await cache.RemoveAsync($"banned_{user.Id}");
         return NoContent();
     }
 }

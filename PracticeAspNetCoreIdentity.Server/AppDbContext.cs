@@ -5,27 +5,30 @@ using PracticeAspNetCoreIdentity.Server.Models;
 
 namespace PracticeAspNetCoreIdentity.Server;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<CustomUser, IdentityRole<Guid>, Guid>(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options)
+    : IdentityDbContext<CustomUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<UserNote> UserNotes { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         ConfigureIdentityTablesName(modelBuilder);
-        
+
+        modelBuilder.Entity<CustomUser>(entity => { entity.Property(e => e.BanEnabled).HasDefaultValue(true); });
+
         modelBuilder.Entity<UserNote>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Content).IsRequired();
             entity.HasOne(e => e.User)
-                  .WithMany(u => u.UserNotes)
-                  .HasForeignKey(e => e.UserId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                .WithMany(u => u.UserNotes)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
-    
+
     private static void ConfigureIdentityTablesName(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<CustomUser>(b => b.ToTable("Users"));

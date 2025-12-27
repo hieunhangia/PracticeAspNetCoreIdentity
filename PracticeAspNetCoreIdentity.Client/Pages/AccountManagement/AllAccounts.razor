@@ -7,21 +7,21 @@
 <select @bind="OrderBy" @bind:after="ProcessOrderByChange">
     <option value="@AccountOrderBy.EmailAsc">Email Ascending</option>
     <option value="@AccountOrderBy.EmailDesc">Email Descending</option>
-    <option value="@AccountOrderBy.LockedOutAsc">Locked Out Ascending</option>
-    <option value="@AccountOrderBy.LockedOutDesc">Locked Out Descending</option>
+    <option value="@AccountOrderBy.BanAsc">Ban Ascending</option>
+    <option value="@AccountOrderBy.BanDesc">Ban Descending</option>
 </select>
 
 <table>
     <tr>
         <th>Email</th>
-        <th>Locked Out</th>
+        <th>Ban Status</th>
         <th>Action</th>
     </tr>
     @foreach (var account in Accounts)
     {
         <tr>
             <td>@account.Email</td>
-            <td>@account.LockedOut</td>
+            <td>@account.BanStatus</td>
             <td>
                 <a href="@Constants.Route.AdminAccountDetail/@account.Id">Details</a>
             </td>

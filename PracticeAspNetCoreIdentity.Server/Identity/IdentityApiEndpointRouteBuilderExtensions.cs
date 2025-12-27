@@ -108,9 +108,14 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             [FromBody] LoginRequest login,
             [FromQuery] bool? useCookies,
             [FromQuery] bool? useSessionCookies,
-            SignInManager<CustomUser> signInManager
+            SignInManager<CustomUser> signInManager,
+            UserManager<CustomUser> userManager
         ) =>
         {
+            var user = await userManager.FindByEmailAsync(login.Email);
+            if (user == null || user.BanEnd > DateTimeOffset.UtcNow)
+                return TypedResults.Problem(statusCode: StatusCodes.Status401Unauthorized);
+
             var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
             var isPersistent = (useCookies == true) && (useSessionCookies != true);
             signInManager.AuthenticationScheme =
@@ -247,7 +252,9 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         {
             var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
-            if (user is not null && await userManager.IsEmailConfirmedAsync(user))
+            if (user != null
+                && await userManager.IsEmailConfirmedAsync(user)
+                && user.BanEnd <= DateTimeOffset.UtcNow)
             {
                 var code = await userManager.GeneratePasswordResetTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -269,7 +276,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         {
             var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
-            if (user is null || !(await userManager.IsEmailConfirmedAsync(user)))
+            if (user is null || !await userManager.IsEmailConfirmedAsync(user))
             {
                 // Don't reveal that the user does not exist or is not confirmed, so don't return a 200 if we had
                 // returned a 400 for an invalid code given a valid user email.

@@ -62,7 +62,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Tokens.ProviderMap.Add("CustomEmailConfirmation",
         new TokenProviderDescriptor(typeof(CustomEmailConfirmationTokenProvider)));
     options.Tokens.EmailConfirmationTokenProvider = "CustomEmailConfirmation";
-    
+
     options.Tokens.ProviderMap.Add("CustomPasswordReset",
         new TokenProviderDescriptor(typeof(CustomPasswordResetTokenProvider)));
     options.Tokens.PasswordResetTokenProvider = "CustomPasswordReset";
@@ -76,6 +76,8 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.ExpireTimeSpan = TimeSpan.FromDays(365); // default is 14 days
     //o.SlidingExpiration = true; // default is true
 });
+
+builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddCors(options =>
 {
@@ -100,6 +102,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWasm");
 app.UseAuthentication();
+app.UseMiddleware<CustomBanMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

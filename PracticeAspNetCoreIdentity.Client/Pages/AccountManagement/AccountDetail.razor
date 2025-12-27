@@ -8,19 +8,18 @@
     <p>Id: @Account.Id</p>
     <p>Email: @Account.Email</p>
     <p>Email @(Account.EmailConfirmed ? "Confirmed" : "Not Confirmed")</p>
-    <p>Lockout @(Account.LockoutEnabled ? "Enabled" : "Not Enabled")</p>
-    @if (Account.LockoutEnabled)
+    <p>Ban @(Account.BanEnabled ? "Enabled" : "Not Enabled")</p>
+    @if (Account.BanEnabled)
     {
-        <p>Access Failed @Account.AccessFailedCount Time</p>
-        @if (Account.LockoutEnd != null && Account.LockoutEnd > DateTimeOffset.UtcNow)
+        @if (Account.BanEnd != null && Account.BanEnd > DateTimeOffset.UtcNow)
         {
-            <p>Locked Out End At: @Account.LockoutEnd</p>
-            <button @onclick="UnlockAccountAsync">Unlock</button>
+            <p>Ban End At: @Account.BanEnd</p>
+            <button @onclick="UnbanAccountAsync">Unban</button>
         }
         else
         {
-            <button @onclick="LockOutAccountAsync">Lock Out</button>
-            <p>Locked Out: No</p>
+            <button @onclick="BanAccountAsync">Ban</button>
+            <p>Ban: No</p>
         }
     }
 </div>
@@ -47,38 +46,38 @@
         }
     }
 
-    private async Task LockOutAccountAsync()
+    private async Task BanAccountAsync()
     {
-        var lockoutTimeInSecondString = await JsRuntime.InvokeAsync<string>("prompt", "Enter lockout time in seconds:", "60");
-        if (!long.TryParse(lockoutTimeInSecondString, out var lockoutTimeInSecond) || lockoutTimeInSecond <= 0)
+        var banTimeInSecondString = await JsRuntime.InvokeAsync<string>("prompt", "Enter ban time in seconds:", "60");
+        if (!long.TryParse(banTimeInSecondString, out var banTimeInSecond) || banTimeInSecond <= 0)
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Invalid lockout time.");
+            await JsRuntime.InvokeVoidAsync("alert", "Invalid ban time.");
             return;
         }
 
-        var response = await WebApiHttpClient.LockOutAccountAsync(AccountId, lockoutTimeInSecond);
+        var response = await WebApiHttpClient.BanAccountAsync(AccountId, new BanUserRequest { BanTimeInSeconds = banTimeInSecond });
         if (response.IsSuccessStatusCode)
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Account locked successfully");
+            await JsRuntime.InvokeVoidAsync("alert", "Account banned successfully");
             await OnInitializedAsync();
         }
         else
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Error locking account");
+            await JsRuntime.InvokeVoidAsync("alert", "Error banning account");
         }
     }
 
-    private async Task UnlockAccountAsync()
+    private async Task UnbanAccountAsync()
     {
-        var response = await WebApiHttpClient.UnlockAccountAsync(AccountId);
+        var response = await WebApiHttpClient.UnbanAccountAsync(AccountId);
         if (response.IsSuccessStatusCode)
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Account unlocked successfully");
+            await JsRuntime.InvokeVoidAsync("alert", "Account unbanned successfully");
             await OnInitializedAsync();
         }
         else
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Error unlocking account");
+            await JsRuntime.InvokeVoidAsync("alert", "Error unbanning account");
         }
     }
 
