@@ -61,7 +61,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
     }
 
     [HttpPost("{id:guid}/ban")]
-    public async Task<IActionResult> LockoutAccountAsync(Guid id, [FromBody] BanUserRequest request)
+    public async Task<IActionResult> BanAccountAsync(Guid id, [FromBody] BanUserRequest request)
     {
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user == null) return NotFound();
@@ -69,18 +69,28 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
         if (!user.BanEnabled) return BadRequest("This account cannot be banned.");
 
         user.BanEnd = DateTimeOffset.Now.AddSeconds(request.BanTimeInSeconds);
-        await userManager.UpdateAsync(user);
-        await userManager.UpdateSecurityStampAsync(user);
-        await cache.SetStringAsync(
-            $"banned_{user.Id}",
-            "banned",
-            new DistributedCacheEntryOptions { AbsoluteExpiration = user.BanEnd }
-        );
+        user.SecurityStamp = Guid.NewGuid().ToString();
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded) return BadRequest("Failed to ban the account.");
+
+        try
+        {
+            await cache.SetStringAsync(
+                $"banned_{user.Id}",
+                "banned",
+                new DistributedCacheEntryOptions { AbsoluteExpiration = user.BanEnd }
+            );
+        }
+        catch
+        {
+            // ignored
+        }
+
         return NoContent();
     }
 
     [HttpPost("{id:guid}/unban")]
-    public async Task<IActionResult> UnlockAccountAsync(Guid id)
+    public async Task<IActionResult> UnbanAccountAsync(Guid id)
     {
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user == null) return NotFound();
@@ -89,8 +99,18 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
             return BadRequest("This account is not currently banned.");
 
         user.BanEnd = null;
-        await userManager.UpdateAsync(user);
-        await cache.RemoveAsync($"banned_{user.Id}");
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded) return BadRequest("Failed to unban the account.");
+
+        try
+        {
+            await cache.RemoveAsync($"banned_{user.Id}");
+        }
+        catch
+        {
+            // ignored
+        }
+
         return NoContent();
     }
 }
