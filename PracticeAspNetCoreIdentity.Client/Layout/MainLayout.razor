@@ -24,13 +24,20 @@
 
 @inject IAccountManagement AccountManagement
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 @code
 {
 
     private async Task LogoutAsync()
     {
-        await AccountManagement.LogoutAsync();
+        var result = await AccountManagement.CookieLogoutAsync();
+        if (!result.Succeeded)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.ErrorList));
+            return;
+        }
+
         NavigationManager.NavigateTo(Constants.Route.Home);
     }
 

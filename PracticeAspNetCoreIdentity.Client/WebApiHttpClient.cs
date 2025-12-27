@@ -19,7 +19,7 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<HttpResponseMessage> GetUserInfoAsync()
         => await client.GetAsync("manage/info");
 
-    public async Task CookieLogoutAsync()
+    public async Task<HttpResponseMessage> CookieLogoutAsync()
         => await client.PostAsync("cookie-logout", null);
 
     public async Task<HttpResponseMessage> GetUserRolesAsync()

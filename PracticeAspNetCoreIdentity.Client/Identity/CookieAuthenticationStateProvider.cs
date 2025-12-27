@@ -43,25 +43,25 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
             new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));
     }
 
-    public async Task<FormResult> LoginAsync(string email, string password)
+    public async Task<ApiResult> CookieLoginAsync(string email, string password)
     {
         using var response = await webApiHttpClient.CookieLoginAsync(email, password);
         if (!response.IsSuccessStatusCode)
-            return new FormResult
+            return new ApiResult
             {
                 Succeeded = false,
                 ErrorList = ["Invalid email or password."]
             };
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-        return new FormResult { Succeeded = true };
+        return new ApiResult { Succeeded = true };
     }
 
-    public async Task<FormResult> RegisterAsync(string email, string password)
+    public async Task<ApiResult> RegisterAsync(string email, string password)
     {
         using var response = await webApiHttpClient.RegisterAsync(email, password);
-        if (response.IsSuccessStatusCode) return new FormResult { Succeeded = true };
+        if (response.IsSuccessStatusCode) return new ApiResult { Succeeded = true };
 
-        return new FormResult
+        return new ApiResult
         {
             Succeeded = false,
             ErrorList = JsonDocument.Parse(await response.Content.ReadAsStringAsync())
@@ -73,9 +73,19 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         };
     }
 
-    public async Task LogoutAsync()
+    public async Task<ApiResult> CookieLogoutAsync()
     {
-        await webApiHttpClient.CookieLogoutAsync();
+        var result = await webApiHttpClient.CookieLogoutAsync();
+        if (!result.IsSuccessStatusCode)
+        {
+            return new ApiResult
+            {
+                Succeeded = false,
+                ErrorList = ["Logout failed."]
+            };
+        }
+
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        return new ApiResult { Succeeded = true };
     }
 }

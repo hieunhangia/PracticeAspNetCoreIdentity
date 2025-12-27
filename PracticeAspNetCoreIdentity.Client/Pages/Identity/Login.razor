@@ -45,7 +45,7 @@
 
     private async Task LoginAsync()
     {
-        var result = await AccountManagement.LoginAsync(Email, Password);
+        var result = await AccountManagement.CookieLoginAsync(Email, Password);
         if (result.Succeeded)
         {
             NavigationManager.NavigateTo(Constants.Route.Home);
