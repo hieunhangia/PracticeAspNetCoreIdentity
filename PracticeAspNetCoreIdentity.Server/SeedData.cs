@@ -86,6 +86,11 @@ public static class SeedData
             if (!lockoutResult.Succeeded)
                 throw new Exception($"Set lockout enabled failed: {FormatIdentityErrors(lockoutResult.Errors)}");
 
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmEmailResult = await userManager.ConfirmEmailAsync(user, token);
+            if (!confirmEmailResult.Succeeded)
+                throw new Exception($"Confirm email failed: {FormatIdentityErrors(confirmEmailResult.Errors)}");
+
             var userRoleResult = await userManager.AddToRolesAsync(user, userData.Roles);
             if (!userRoleResult.Succeeded)
                 throw new Exception($"Add roles to user failed: {FormatIdentityErrors(userRoleResult.Errors)}");

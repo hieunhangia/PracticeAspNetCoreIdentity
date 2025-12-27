@@ -13,6 +13,9 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<HttpResponseMessage> RegisterAsync(string email, string password)
         => await client.PostAsJsonAsync("register", new { email, password });
 
+    public async Task<HttpResponseMessage> ResendConfirmationEmailAsync(string email)
+        => await client.PostAsJsonAsync("resendConfirmationEmail", new { email });
+
     public async Task<HttpResponseMessage> GetUserInfoAsync()
         => await client.GetAsync("manage/info");
 

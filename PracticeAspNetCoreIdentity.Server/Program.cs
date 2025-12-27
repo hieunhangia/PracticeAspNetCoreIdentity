@@ -21,6 +21,8 @@ builder.Services.AddIdentityApiEndpoints<CustomUser>()
     .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>();
 
+builder.Services.AddTransient<IEmailSender<CustomUser>, EmailSender>();
+
 builder.Services.Configure<IdentityOptions>(options =>
 {
     //options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5); // default is 5 minutes
@@ -34,7 +36,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     //options.Password.RequiredLength = 6; // default is 6
     //options.Password.RequiredUniqueChars = 1; // default is 1
 
-    //options.SignIn.RequireConfirmedEmail = false; //default is false
+    options.SignIn.RequireConfirmedEmail = true; //default is false
     //options.SignIn.RequireConfirmedAccount = false; //default is false
     //options.SignIn.RequireConfirmedPhoneNumber = false; //default is false
 
