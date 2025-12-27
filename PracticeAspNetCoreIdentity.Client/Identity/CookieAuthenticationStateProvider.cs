@@ -61,15 +61,25 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         using var response = await webApiHttpClient.RegisterAsync(email, password);
         if (response.IsSuccessStatusCode) return new ApiResult { Succeeded = true };
 
+        var content = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(content);
+        var errors = doc.RootElement.GetProperty("errors").EnumerateObject()
+            .SelectMany(entry =>
+            {
+                return entry.Value.ValueKind switch
+                {
+                    JsonValueKind.Array => entry.Value.EnumerateArray().Select(e => e.GetString()),
+                    JsonValueKind.String => [entry.Value.GetString()],
+                    _ => []
+                };
+            })
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+
         return new ApiResult
         {
             Succeeded = false,
-            ErrorList = JsonDocument.Parse(await response.Content.ReadAsStringAsync())
-                .RootElement.GetProperty("errors").EnumerateObject()
-                .SelectMany(x => x.Value.EnumerateArray())
-                .Select(x => x.GetString())
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .ToArray()!
+            ErrorList = errors!
         };
     }
 
@@ -98,6 +108,45 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         {
             Succeeded = false,
             ErrorList = ["Failed to resend confirmation email."]
+        };
+    }
+
+    public async Task<ApiResult> ForgotPasswordAsync(string email)
+    {
+        using var response = await webApiHttpClient.ForgotPasswordAsync(email);
+        if (response.IsSuccessStatusCode) return new ApiResult { Succeeded = true };
+
+        return new ApiResult
+        {
+            Succeeded = false,
+            ErrorList = ["Failed to send password reset email."]
+        };
+    }
+
+    public async Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword)
+    {
+        using var response = await webApiHttpClient.ResetPasswordAsync(email, resetCode, newPassword);
+        if (response.IsSuccessStatusCode) return new ApiResult { Succeeded = true };
+
+        var content = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(content);
+        var errors = doc.RootElement.GetProperty("errors").EnumerateObject()
+            .SelectMany(entry =>
+            {
+                return entry.Value.ValueKind switch
+                {
+                    JsonValueKind.Array => entry.Value.EnumerateArray().Select(e => e.GetString()),
+                    JsonValueKind.String => [entry.Value.GetString()],
+                    _ => []
+                };
+            })
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+
+        return new ApiResult
+        {
+            Succeeded = false,
+            ErrorList = errors!
         };
     }
 }

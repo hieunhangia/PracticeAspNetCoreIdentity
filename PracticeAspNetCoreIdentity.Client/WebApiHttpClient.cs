@@ -16,6 +16,12 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<HttpResponseMessage> ResendConfirmationEmailAsync(string email)
         => await client.PostAsJsonAsync("resendConfirmationEmail", new { email });
 
+    public async Task<HttpResponseMessage> ForgotPasswordAsync(string email)
+        => await client.PostAsJsonAsync("forgotPassword", new { email });
+
+    public async Task<HttpResponseMessage> ResetPasswordAsync(string email, string resetCode, string newPassword)
+        => await client.PostAsJsonAsync("resetPassword", new { email, resetCode, newPassword });
+
     public async Task<HttpResponseMessage> GetUserInfoAsync()
         => await client.GetAsync("manage/info");
 
