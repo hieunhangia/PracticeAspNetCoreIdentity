@@ -82,7 +82,7 @@
         var result = await AccountManagement.ResendConfirmationEmailAsync(Email);
         if (result.Succeeded)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "If an account exists for this email and it is not confirmed, a new confirmation email has been sent.");
+            await JSRuntime.InvokeVoidAsync("alert", "A new confirmation email has been sent if the email is not already confirmed.");
         }
         else
         {
