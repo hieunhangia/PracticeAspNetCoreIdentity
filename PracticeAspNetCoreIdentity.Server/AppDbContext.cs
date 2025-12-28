@@ -15,8 +15,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         base.OnModelCreating(modelBuilder);
         ConfigureIdentityTablesName(modelBuilder);
 
-        modelBuilder.Entity<CustomUser>(entity => { entity.Property(e => e.BanEnabled).HasDefaultValue(true); });
-
         modelBuilder.Entity<UserNote>(entity =>
         {
             entity.HasKey(e => e.Id);

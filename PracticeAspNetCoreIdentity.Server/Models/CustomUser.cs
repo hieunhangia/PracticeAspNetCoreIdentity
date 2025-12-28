@@ -4,7 +4,8 @@ namespace PracticeAspNetCoreIdentity.Server.Models;
 
 public class CustomUser : IdentityUser<Guid>
 {
-    public bool BanEnabled { get; set; }
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    public bool BanEnabled { get; set; } = true;
     public DateTimeOffset? BanEnd { get; set; }
 
     public ICollection<UserNote>? UserNotes { get; set; }

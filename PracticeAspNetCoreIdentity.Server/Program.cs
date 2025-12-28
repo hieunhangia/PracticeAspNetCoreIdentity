@@ -79,6 +79,8 @@ builder.Services.ConfigureApplicationCookie(o =>
 
 builder.Services.AddDistributedMemoryCache();
 
+builder.Services.AddHostedService<CleanupUnconfirmEmailAccountService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorWasm",
