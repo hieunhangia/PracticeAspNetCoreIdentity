@@ -76,28 +76,14 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             await emailStore.SetEmailAsync(user, email, CancellationToken.None);
 
             await using var transaction = await dbContext.Database.BeginTransactionAsync();
-            try
-            {
-                var result = await userManager.CreateAsync(user, registration.Password);
-                if (!result.Succeeded)
-                {
-                    return CreateValidationProblem(result);
-                }
 
-                var roleResult = await userManager.AddToRoleAsync(user, UserRole.User);
-                if (!roleResult.Succeeded)
-                {
-                    await transaction.RollbackAsync();
-                    return CreateValidationProblem(roleResult);
-                }
+            var result = await userManager.CreateAsync(user, registration.Password);
+            if (!result.Succeeded) return CreateValidationProblem(result);
 
-                await transaction.CommitAsync();
-            }
-            catch (Exception e)
-            {
-                await transaction.RollbackAsync();
-                throw new InvalidOperationException("An error occurred creating the user.", e);
-            }
+            var roleResult = await userManager.AddToRoleAsync(user, UserRole.User);
+            if (!roleResult.Succeeded) return CreateValidationProblem(roleResult);
+
+            await transaction.CommitAsync();
 
             await SendConfirmationEmailAsync(user, userManager, context, emailSender, email);
             return TypedResults.Ok();
