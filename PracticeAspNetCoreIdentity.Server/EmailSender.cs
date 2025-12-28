@@ -1,5 +1,6 @@
 using FluentEmail.Core;
 using Microsoft.AspNetCore.Identity;
+using PracticeAspNetCoreIdentity.Server.Identity.Constants;
 using PracticeAspNetCoreIdentity.Server.Models;
 
 namespace PracticeAspNetCoreIdentity.Server;
@@ -13,8 +14,9 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
              <head>
              </head>
              <body>
-                Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.
-                <p>Link will expire in 1 day.</p>
+                Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.<br>
+                This link is valid for {TokenExpiredTime.EmailConfirmationHours} hours. During this time, your email is reserved, so you won't need to register again.
+                If you didn't request this, you can safely ignore this email.
              </body>
              </html>
              """);
@@ -29,8 +31,8 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
              <head>
              </head>
              <body>
-                Please reset your password using the following code:<br>{resetCode}
-                <p>Code will expire in 1 minute.</p>
+                Please reset your password using the following code:<br>{resetCode}<br>
+                Code will expire in {TokenExpiredTime.PasswordResetCodeMinutes} minute(s).
              </body>
              </html>
              """);
