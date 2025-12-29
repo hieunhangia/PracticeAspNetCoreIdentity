@@ -4,6 +4,6 @@ public static class AccountOrderBy
 {
     public const string EmailAsc = "email";
     public const string EmailDesc = "-email";
-    public const string BanStatusAsc = "banstatus";
-    public const string BanStatusDesc = "-banstatus";
+    public const string IsBannedAsc = "isbanned";
+    public const string IsBannedDesc = "-isbanned";
 }

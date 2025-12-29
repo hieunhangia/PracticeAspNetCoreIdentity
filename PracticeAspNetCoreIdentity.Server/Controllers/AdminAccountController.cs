@@ -19,14 +19,14 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
         [FromQuery] string orderBy = AccountOrderBy.EmailAsc)
     {
         if (page < 1) page = 1;
-        if (pageSize is < 1 or > 1000) pageSize = 10;
-        var users = userManager.Users;
+        if (pageSize is < 1 or > 100) pageSize = 10;
+        var users = userManager.Users.AsNoTracking();
         users = orderBy switch
         {
             AccountOrderBy.EmailAsc => users.OrderBy(u => u.Email),
             AccountOrderBy.EmailDesc => users.OrderByDescending(u => u.Email),
-            AccountOrderBy.BanStatusAsc => users.OrderBy(u => u.BanEnabled),
-            AccountOrderBy.BanStatusDesc => users.OrderByDescending(u => u.BanEnabled),
+            AccountOrderBy.IsBannedAsc => users.OrderBy(u => u.BanEnd),
+            AccountOrderBy.IsBannedDesc => users.OrderByDescending(u => u.BanEnd),
             _ => users.OrderBy(u => u.Email)
         };
         return Ok(await users
@@ -36,7 +36,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
             {
                 Id = user.Id,
                 Email = user.Email,
-                BanStatus = user.BanEnabled && user.BanEnd > DateTimeOffset.UtcNow
+                IsBanned = user.BanEnabled && user.BanEnd > DateTimeOffset.UtcNow
             })
             .ToListAsync());
     }
