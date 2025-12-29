@@ -54,7 +54,7 @@
         }
         else
         {
-            await JsRuntime.InvokeVoidAsync("alert", $"Login failed. {string.Join("\n", result.ErrorList)}");
+            await JsRuntime.InvokeVoidAsync("alert", $"Login failed. \n{string.Join("\n", result.ErrorList)}");
         }
     }
 

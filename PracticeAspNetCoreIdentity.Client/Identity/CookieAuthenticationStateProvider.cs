@@ -50,7 +50,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
             return new ApiResult
             {
                 Succeeded = false,
-                ErrorList = ["Login failed."]
+                ErrorList = ["Login failed. Please check your credentials and try again."]
             };
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         return new ApiResult { Succeeded = true };
