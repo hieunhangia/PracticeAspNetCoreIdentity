@@ -18,7 +18,7 @@ public class CustomBanMiddleware(RequestDelegate next)
             if (!string.IsNullOrEmpty(isBanned))
             {
                 await context.SignOutAsync(IdentityConstants.ApplicationScheme);
-                context.Response.StatusCode = 401;
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;
             }
         }
