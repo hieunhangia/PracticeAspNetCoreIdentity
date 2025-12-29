@@ -25,8 +25,8 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
         {
             AccountOrderBy.EmailAsc => users.OrderBy(u => u.Email),
             AccountOrderBy.EmailDesc => users.OrderByDescending(u => u.Email),
-            AccountOrderBy.BanAsc => users.OrderBy(u => u.LockoutEnd),
-            AccountOrderBy.BanDesc => users.OrderByDescending(u => u.LockoutEnd),
+            AccountOrderBy.BanStatusAsc => users.OrderBy(u => u.BanEnabled),
+            AccountOrderBy.BanStatusDesc => users.OrderByDescending(u => u.BanEnabled),
             _ => users.OrderBy(u => u.Email)
         };
         return Ok(await users
@@ -36,7 +36,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
             {
                 Id = user.Id,
                 Email = user.Email,
-                BanStatus = user.BanEnabled && user.BanEnd > DateTimeOffset.Now
+                BanStatus = user.BanEnabled && user.BanEnd > DateTimeOffset.UtcNow
             })
             .ToListAsync());
     }
@@ -68,23 +68,14 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
 
         if (!user.BanEnabled) return BadRequest("This account cannot be banned.");
 
-        user.BanEnd = DateTimeOffset.Now.AddSeconds(request.BanTimeInSeconds);
+        user.BanEnd = DateTimeOffset.UtcNow.AddSeconds(request.BanTimeInSeconds);
         user.SecurityStamp = Guid.NewGuid().ToString();
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded) return BadRequest("Failed to ban the account.");
 
-        try
-        {
-            await cache.SetStringAsync(
-                $"banned_{user.Id}",
-                "banned",
-                new DistributedCacheEntryOptions { AbsoluteExpiration = user.BanEnd }
-            );
-        }
-        catch
-        {
-            // ignored
-        }
+        await cache.SetStringAsync($"banned_{user.Id}", "banned",
+            new DistributedCacheEntryOptions { AbsoluteExpiration = user.BanEnd }
+        );
 
         return NoContent();
     }
@@ -95,21 +86,14 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user == null) return NotFound();
 
-        if (user.BanEnd == null || user.BanEnd <= DateTimeOffset.Now)
+        if (user.BanEnd == null || user.BanEnd <= DateTimeOffset.UtcNow)
             return BadRequest("This account is not currently banned.");
 
         user.BanEnd = null;
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded) return BadRequest("Failed to unban the account.");
 
-        try
-        {
-            await cache.RemoveAsync($"banned_{user.Id}");
-        }
-        catch
-        {
-            // ignored
-        }
+        await cache.RemoveAsync($"banned_{user.Id}");
 
         return NoContent();
     }
