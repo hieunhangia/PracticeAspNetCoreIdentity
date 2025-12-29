@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace PracticeAspNetCoreIdentity.Server.Identity;
+namespace PracticeAspNetCoreIdentity.Server.Identity.Middlewares;
 
 public class CustomBanMiddleware(RequestDelegate next)
 {

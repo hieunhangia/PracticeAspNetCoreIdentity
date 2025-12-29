@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace PracticeAspNetCoreIdentity.Server.Identity;
+namespace PracticeAspNetCoreIdentity.Server.Identity.BackgroundServices;
 
 public class CleanupUnconfirmEmailAccountService(
     IServiceScopeFactory scopeFactory,

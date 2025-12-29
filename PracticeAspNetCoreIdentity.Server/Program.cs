@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server;
 using PracticeAspNetCoreIdentity.Server.Identity;
+using PracticeAspNetCoreIdentity.Server.Identity.BackgroundServices;
+using PracticeAspNetCoreIdentity.Server.Identity.Middlewares;
+using PracticeAspNetCoreIdentity.Server.Identity.TokenProviders;
 using PracticeAspNetCoreIdentity.Server.Models;
 using Scalar.AspNetCore;
 

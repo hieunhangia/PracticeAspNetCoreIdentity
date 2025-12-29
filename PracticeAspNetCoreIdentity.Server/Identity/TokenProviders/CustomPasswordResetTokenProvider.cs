@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using PracticeAspNetCoreIdentity.Server.Models;
 
-namespace PracticeAspNetCoreIdentity.Server.Identity;
+namespace PracticeAspNetCoreIdentity.Server.Identity.TokenProviders;
 
 public class CustomPasswordResetTokenProvider(
     IDataProtectionProvider dataProtectionProvider,
