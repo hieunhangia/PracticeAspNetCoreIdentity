@@ -1,0 +1,58 @@
+<div id="google-btn"></div>
+
+<script>
+    function initializeGoogleLogin(clientId, buttonElementId, dotnetHelper) {
+        if (document.getElementById('gsi-client')) {
+            renderButton(clientId, buttonElementId, dotnetHelper);
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = "https://accounts.google.com/gsi/client";
+        script.id = 'gsi-client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => renderButton(clientId, buttonElementId, dotnetHelper);
+        document.head.appendChild(script);
+    }
+
+    function renderButton(clientId, buttonElementId, dotnetHelper) {
+        google.accounts.id.initialize({
+            client_id: clientId,
+            callback: (response) => dotnetHelper.invokeMethodAsync('HandleGoogleCallback', response.credential)
+        });
+        google.accounts.id.renderButton(document.getElementById(buttonElementId), {size: "medium"});
+        google.accounts.id.prompt();
+    }
+</script>
+
+@implements IDisposable
+@inject IAccountManagement AccountManagement
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+
+@code {
+    private DotNetObjectReference<GoogleLoginButton>? DotNetHelper;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            DotNetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("initializeGoogleLogin", Configuration["GoogleClientId"]!, "google-btn", DotNetHelper);
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleGoogleCallback(string idToken)
+    {
+        var result = await AccountManagement.CookieGoogleLoginAsync(idToken);
+
+        if (result.Succeeded) Navigation.NavigateTo(Constants.Route.Home);
+        else await JSRuntime.InvokeVoidAsync("alert", $"Google login failed:\n{string.Join("\n", result.ErrorList)}");
+    }
+
+    public void Dispose() => DotNetHelper?.Dispose();
+
+}

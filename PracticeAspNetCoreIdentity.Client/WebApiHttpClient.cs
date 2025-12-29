@@ -10,6 +10,9 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<HttpResponseMessage> CookieLoginAsync(string email, string password)
         => await client.PostAsJsonAsync("login?useCookies=true", new { email, password });
 
+    public async Task<HttpResponseMessage> CookieGoogleLoginAsync(GoogleLoginRequest request)
+        => await client.PostAsJsonAsync("/cookie-google-login", request);
+
     public async Task<HttpResponseMessage> RegisterAsync(string email, string password)
         => await client.PostAsJsonAsync("register", new { email, password });
 

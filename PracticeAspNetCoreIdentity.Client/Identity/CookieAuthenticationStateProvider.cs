@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
 using PracticeAspNetCoreIdentity.Client.Identity.Models;
+using PracticeAspNetCoreIdentity.Shared.Models;
 
 namespace PracticeAspNetCoreIdentity.Client.Identity;
 
@@ -51,6 +52,20 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
             {
                 Succeeded = false,
                 ErrorList = ["Login failed. Please check your credentials and try again."]
+            };
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        return new ApiResult { Succeeded = true };
+    }
+
+    public async Task<ApiResult> CookieGoogleLoginAsync(string idToken)
+    {
+        using var response =
+            await webApiHttpClient.CookieGoogleLoginAsync(new GoogleLoginRequest { IdToken = idToken });
+        if (!response.IsSuccessStatusCode)
+            return new ApiResult
+            {
+                Succeeded = false,
+                ErrorList = ["Google login failed. Please try again."]
             };
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         return new ApiResult { Succeeded = true };

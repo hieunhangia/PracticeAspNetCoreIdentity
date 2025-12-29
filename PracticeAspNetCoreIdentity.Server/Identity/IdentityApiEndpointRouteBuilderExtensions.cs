@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
+using PracticeAspNetCoreIdentity.Shared.Models;
 
 namespace PracticeAspNetCoreIdentity.Server.Identity;
 
@@ -442,6 +444,71 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             var roles = await userManager.GetRolesAsync(userDb);
             return Results.Ok(roles);
+        });
+
+        routeGroup.MapPost("/cookie-google-login", async (
+            GoogleLoginRequest request,
+            IConfiguration configuration,
+            SignInManager<CustomUser> signInManager,
+            UserManager<CustomUser> userManager,
+            IUserStore<CustomUser> userStore,
+            AppDbContext dbContext
+        ) =>
+        {
+            try
+            {
+                var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings { Audience = [configuration["GoogleClientId"]] });
+                var user = await userManager.FindByLoginAsync(Constants.LoginProvider.Google, payload.Subject);
+                if (user == null)
+                {
+                    user = await userManager.FindByEmailAsync(payload.Email);
+                    if (user == null)
+                    {
+                        var emailStore = (IUserEmailStore<CustomUser>)userStore;
+                        user = new CustomUser
+                        {
+                            UserName = payload.Email,
+                            Email = payload.Email,
+                            EmailConfirmed = true
+                        };
+
+                        await userStore.SetUserNameAsync(user, payload.Email, CancellationToken.None);
+                        await emailStore.SetEmailAsync(user, payload.Email, CancellationToken.None);
+
+                        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+
+                        var registerResult = await userManager.CreateAsync(user);
+                        if (!registerResult.Succeeded) return Results.BadRequest(registerResult.Errors);
+
+                        var roleResult = await userManager.AddToRoleAsync(user, UserRole.User);
+                        if (!roleResult.Succeeded) return Results.BadRequest(roleResult.Errors);
+
+                        var addLoginResult = await userManager.AddLoginAsync(user,
+                            new UserLoginInfo(Constants.LoginProvider.Google, payload.Subject, Constants.LoginProvider.Google));
+                        if (!addLoginResult.Succeeded) return Results.BadRequest(addLoginResult.Errors);
+
+                        await transaction.CommitAsync();
+                    }
+                    else
+                    {
+                        var addLoginResult = await userManager.AddLoginAsync(user,
+                            new UserLoginInfo(Constants.LoginProvider.Google, payload.Subject, Constants.LoginProvider.Google));
+                        if (!addLoginResult.Succeeded) return Results.BadRequest(addLoginResult.Errors);
+                    }
+                }
+
+                await signInManager.SignInAsync(user, isPersistent: true);
+                return Results.Ok();
+            }
+            catch (InvalidJwtException)
+            {
+                return Results.BadRequest("Invalid Google Token");
+            }
+            catch
+            {
+                return Results.Problem("An error occurred during Google login.");
+            }
         });
 
         return new IdentityEndpointsConventionBuilder(routeGroup);
