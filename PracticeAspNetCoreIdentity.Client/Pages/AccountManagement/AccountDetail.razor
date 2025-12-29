@@ -8,8 +8,8 @@
     <p>Id: @Account.Id</p>
     <p>Email: @Account.Email</p>
     <p>Email @(Account.EmailConfirmed ? "Confirmed" : "Not Confirmed")</p>
-    <p>Ban @(Account.BanEnabled ? "Enabled" : "Not Enabled")</p>
-    @if (Account.BanEnabled)
+    <p>Account Can Be Banned: @(Account.IsBannable ? "Yes" : "No")</p>
+    @if (Account.IsBannable)
     {
         @if (Account.BanEnd != null && Account.BanEnd > DateTimeOffset.UtcNow)
         {

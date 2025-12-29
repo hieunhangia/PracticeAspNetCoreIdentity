@@ -8,10 +8,10 @@ public static class SeedData
 {
     private static readonly string[] roles = [UserRole.Administrator, UserRole.Manager, UserRole.User];
 
-    private static IEnumerable<(string Email, string Password, bool LockoutEnabled, bool BanEnabled, string[] Roles)>
+    private static IEnumerable<(string Email, string Password, bool LockoutEnabled, bool IsBannable, string[] Roles)>
         GetUsers()
     {
-        ICollection<(string Email, string Password, bool LockoutEnabled, bool BanEnabled, string[] Roles)> users =
+        ICollection<(string Email, string Password, bool LockoutEnabled, bool IsBannable, string[] Roles)> users =
         [
             (
                 "admin@app.com",
@@ -82,7 +82,7 @@ public static class SeedData
             {
                 UserName = userData.Email,
                 Email = userData.Email,
-                BanEnabled = userData.BanEnabled
+                IsBannable = userData.IsBannable
             };
             var userResult = await userManager.CreateAsync(user, userData.Password);
             if (!userResult.Succeeded)

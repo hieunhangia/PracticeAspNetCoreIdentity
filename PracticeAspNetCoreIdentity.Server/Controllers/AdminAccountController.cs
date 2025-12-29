@@ -36,7 +36,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
             {
                 Id = user.Id,
                 Email = user.Email,
-                IsBanned = user.BanEnabled && user.BanEnd > DateTimeOffset.UtcNow
+                IsBanned = user.IsBannable && user.BanEnd > DateTimeOffset.UtcNow
             })
             .ToListAsync());
     }
@@ -54,7 +54,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
                 Id = user.Id,
                 Email = user.Email,
                 EmailConfirmed = user.EmailConfirmed,
-                BanEnabled = user.BanEnabled,
+                IsBannable = user.IsBannable,
                 BanEnd = user.BanEnd
             })
             : NotFound();
@@ -66,7 +66,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
         var user = await userManager.FindByIdAsync(id.ToString());
         if (user == null) return NotFound();
 
-        if (!user.BanEnabled) return BadRequest("This account cannot be banned.");
+        if (!user.IsBannable) return BadRequest("This account cannot be banned.");
 
         user.BanEnd = DateTimeOffset.UtcNow.AddSeconds(request.BanTimeInSeconds);
         user.SecurityStamp = Guid.NewGuid().ToString();
