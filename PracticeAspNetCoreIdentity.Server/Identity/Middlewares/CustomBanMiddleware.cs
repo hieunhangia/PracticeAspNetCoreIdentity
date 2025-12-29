@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Distributed;
@@ -19,6 +20,8 @@ public class CustomBanMiddleware(RequestDelegate next)
             {
                 await context.SignOutAsync(IdentityConstants.ApplicationScheme);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(JsonSerializer.Serialize(new { code = "USER_BANNED" }));
                 return;
             }
         }
