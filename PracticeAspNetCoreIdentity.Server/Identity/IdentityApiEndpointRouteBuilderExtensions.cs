@@ -59,8 +59,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         {
             if (!userManager.SupportsUserEmail)
             {
-                throw new NotSupportedException(
-                    $"{nameof(MapIdentityApi)} requires a user store with email support.");
+                throw new NotSupportedException($"{nameof(MapIdentityApi)} requires a user store with email support.");
             }
 
             var emailStore = (IUserEmailStore<CustomUser>)userStore;
@@ -94,14 +93,9 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             [FromBody] LoginRequest login,
             [FromQuery] bool? useCookies,
             [FromQuery] bool? useSessionCookies,
-            SignInManager<CustomUser> signInManager,
-            UserManager<CustomUser> userManager
+            SignInManager<CustomUser> signInManager
         ) =>
         {
-            var user = await userManager.FindByEmailAsync(login.Email);
-            if (user == null || user.BanEnd > DateTimeOffset.UtcNow)
-                return TypedResults.Problem(statusCode: StatusCodes.Status401Unauthorized);
-
             var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
             var isPersistent = (useCookies == true) && (useSessionCookies != true);
             signInManager.AuthenticationScheme =
@@ -147,8 +141,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 // Reject the /refresh attempt with a 401 if the token expired or the security stamp validation fails
                 if (refreshTicket?.Properties.ExpiresUtc is not { } expiresUtc ||
                     timeProvider.GetUtcNow() >= expiresUtc ||
-                    await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not { } user ||
-                    user.BanEnd > DateTimeOffset.UtcNow)
+                    await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not { } user)
                 {
                     return TypedResults.Challenge();
                 }
@@ -165,8 +158,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 UserManager<CustomUser> userManager
             ) =>
             {
-                var user = await userManager.FindByIdAsync(userId);
-                if (user == null || user.BanEnd > DateTimeOffset.UtcNow)
+                if (await userManager.FindByIdAsync(userId) is not { } user)
                 {
                     // We could respond with a 404 instead of a 401 like Identity UI, but that feels like unnecessary information.
                     return TypedResults.Unauthorized();
@@ -222,9 +214,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         ) =>
         {
             var user = await userManager.FindByNameAsync(resendRequest.Email);
-            if (user != null &&
-                !await userManager.IsEmailConfirmedAsync(user) &&
-                !(user.BanEnd > DateTimeOffset.UtcNow))
+            if (user != null && !await userManager.IsEmailConfirmedAsync(user))
             {
                 await SendConfirmationEmailAsync(user, userManager, context, emailSender, resendRequest.Email);
             }
@@ -241,9 +231,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         {
             var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
-            if (user != null &&
-                await userManager.IsEmailConfirmedAsync(user) &&
-                !(user.BanEnd > DateTimeOffset.UtcNow))
+            if (user != null && await userManager.IsEmailConfirmedAsync(user))
             {
                 var code = await userManager.GeneratePasswordResetTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -265,9 +253,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         {
             var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
-            if (user is null ||
-                !await userManager.IsEmailConfirmedAsync(user) ||
-                user.BanEnd > DateTimeOffset.UtcNow)
+            if (user == null || !await userManager.IsEmailConfirmedAsync(user))
             {
                 // Don't reveal that the user does not exist or is not confirmed, so don't return a 200 if we had
                 // returned a 400 for an invalid code given a valid user email.

@@ -8,15 +8,14 @@ public static class SeedData
 {
     private static readonly string[] roles = [UserRole.Administrator, UserRole.Manager, UserRole.User];
 
-    private static IEnumerable<(string Email, string Password, bool LockoutEnabled, bool IsBannable, string[] Roles)>
+    private static IEnumerable<(string Email, string Password, bool LockoutEnabled, string[] Roles)>
         GetUsers()
     {
-        ICollection<(string Email, string Password, bool LockoutEnabled, bool IsBannable, string[] Roles)> users =
+        ICollection<(string Email, string Password, bool LockoutEnabled, string[] Roles)> users =
         [
             (
                 "admin@app.com",
                 "Admin@123",
-                false,
                 false,
                 [UserRole.Administrator, UserRole.Manager, UserRole.User]
             ),
@@ -24,26 +23,23 @@ public static class SeedData
                 "manager@app.com",
                 "Manager@123",
                 true,
-                true,
                 [UserRole.Manager, UserRole.User]
             ),
             (
                 "user@app.com",
                 "User@123",
                 true,
-                true,
                 [UserRole.User]
             )
         ];
         for (var i = 1; i <= 36; i++)
         {
-            var item = new ValueTuple<string, string, bool, bool, string[]>
+            var item = new ValueTuple<string, string, bool, string[]>
             {
                 Item1 = "user" + i + "@app.com",
                 Item2 = "User" + i + "@123",
                 Item3 = true,
-                Item4 = true,
-                Item5 = [UserRole.User]
+                Item4 = [UserRole.User]
             };
             users.Add(item);
         }
@@ -81,8 +77,7 @@ public static class SeedData
             var user = new CustomUser
             {
                 UserName = userData.Email,
-                Email = userData.Email,
-                IsBannable = userData.IsBannable
+                Email = userData.Email
             };
             var userResult = await userManager.CreateAsync(user, userData.Password);
             if (!userResult.Succeeded)

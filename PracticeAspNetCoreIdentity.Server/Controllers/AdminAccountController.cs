@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
 using PracticeAspNetCoreIdentity.Shared.Models;
@@ -12,7 +11,7 @@ namespace PracticeAspNetCoreIdentity.Server.Controllers;
 [ApiController]
 [Route("accounts")]
 [Authorize(Roles = UserRole.Administrator)]
-public class AccountManagementController(UserManager<CustomUser> userManager, IDistributedCache cache) : ControllerBase
+public class AccountManagementController(UserManager<CustomUser> userManager) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllAccountsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10,
@@ -25,8 +24,6 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
         {
             AccountOrderBy.EmailAsc => users.OrderBy(u => u.Email),
             AccountOrderBy.EmailDesc => users.OrderByDescending(u => u.Email),
-            AccountOrderBy.IsBannedAsc => users.OrderBy(u => u.BanEnd),
-            AccountOrderBy.IsBannedDesc => users.OrderByDescending(u => u.BanEnd),
             _ => users.OrderBy(u => u.Email)
         };
         return Ok(await users
@@ -35,8 +32,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
             .Select(user => new AccountSummaryDto
             {
                 Id = user.Id,
-                Email = user.Email,
-                IsBanned = user.IsBannable && user.BanEnd > DateTimeOffset.UtcNow
+                Email = user.Email
             })
             .ToListAsync());
     }
@@ -53,48 +49,8 @@ public class AccountManagementController(UserManager<CustomUser> userManager, ID
             {
                 Id = user.Id,
                 Email = user.Email,
-                EmailConfirmed = user.EmailConfirmed,
-                IsBannable = user.IsBannable,
-                BanEnd = user.BanEnd
+                EmailConfirmed = user.EmailConfirmed
             })
             : NotFound();
-    }
-
-    [HttpPost("{id:guid}/ban")]
-    public async Task<IActionResult> BanAccountAsync(Guid id, [FromBody] BanUserRequest request)
-    {
-        var user = await userManager.FindByIdAsync(id.ToString());
-        if (user == null) return NotFound();
-
-        if (!user.IsBannable) return BadRequest("This account cannot be banned.");
-
-        user.BanEnd = DateTimeOffset.UtcNow.AddSeconds(request.BanTimeInSeconds);
-        user.SecurityStamp = Guid.NewGuid().ToString();
-        var result = await userManager.UpdateAsync(user);
-        if (!result.Succeeded) return BadRequest("Failed to ban the account.");
-
-        await cache.SetStringAsync($"banned_{user.Id}", "banned",
-            new DistributedCacheEntryOptions { AbsoluteExpiration = user.BanEnd }
-        );
-
-        return NoContent();
-    }
-
-    [HttpPost("{id:guid}/unban")]
-    public async Task<IActionResult> UnbanAccountAsync(Guid id)
-    {
-        var user = await userManager.FindByIdAsync(id.ToString());
-        if (user == null) return NotFound();
-
-        if (user.BanEnd == null || user.BanEnd <= DateTimeOffset.UtcNow)
-            return BadRequest("This account is not currently banned.");
-
-        user.BanEnd = null;
-        var result = await userManager.UpdateAsync(user);
-        if (!result.Succeeded) return BadRequest("Failed to unban the account.");
-
-        await cache.RemoveAsync($"banned_{user.Id}");
-
-        return NoContent();
     }
 }

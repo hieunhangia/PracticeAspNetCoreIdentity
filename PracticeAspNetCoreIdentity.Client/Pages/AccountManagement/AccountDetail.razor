@@ -8,20 +8,6 @@
     <p>Id: @Account.Id</p>
     <p>Email: @Account.Email</p>
     <p>Email @(Account.EmailConfirmed ? "Confirmed" : "Not Confirmed")</p>
-    <p>Account Can Be Banned: @(Account.IsBannable ? "Yes" : "No")</p>
-    @if (Account.IsBannable)
-    {
-        @if (Account.BanEnd != null && Account.BanEnd > DateTimeOffset.UtcNow)
-        {
-            <p>Ban End At: @Account.BanEnd</p>
-            <button @onclick="UnbanAccountAsync">Unban</button>
-        }
-        else
-        {
-            <button @onclick="BanAccountAsync">Ban</button>
-            <p>Ban: No</p>
-        }
-    }
 </div>
 
 
@@ -43,41 +29,6 @@
         else
         {
             await JsRuntime.InvokeVoidAsync("alert", "Error fetching account details.");
-        }
-    }
-
-    private async Task BanAccountAsync()
-    {
-        var banTimeInSecondString = await JsRuntime.InvokeAsync<string>("prompt", "Enter ban time in seconds:", "60");
-        if (!long.TryParse(banTimeInSecondString, out var banTimeInSecond) || banTimeInSecond <= 0)
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Invalid ban time.");
-            return;
-        }
-
-        var response = await WebApiHttpClient.BanAccountAsync(AccountId, new BanUserRequest { BanTimeInSeconds = banTimeInSecond });
-        if (response.IsSuccessStatusCode)
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Account banned successfully");
-            await OnInitializedAsync();
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error banning account");
-        }
-    }
-
-    private async Task UnbanAccountAsync()
-    {
-        var response = await WebApiHttpClient.UnbanAccountAsync(AccountId);
-        if (response.IsSuccessStatusCode)
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Account unbanned successfully");
-            await OnInitializedAsync();
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error unbanning account");
         }
     }
 

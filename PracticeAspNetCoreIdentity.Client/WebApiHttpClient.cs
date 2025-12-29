@@ -43,12 +43,6 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<HttpResponseMessage> GetAccountByIdAsync(Guid id)
         => await client.GetAsync($"accounts/{id}");
 
-    public async Task<HttpResponseMessage> BanAccountAsync(Guid id, BanUserRequest request)
-        => await client.PostAsJsonAsync($"accounts/{id}/ban", request);
-
-    public async Task<HttpResponseMessage> UnbanAccountAsync(Guid id)
-        => await client.PostAsync($"accounts/{id}/unban", null);
-
 
     // User Notes Management
     public async Task<HttpResponseMessage> GetAllNotesAsync()

@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server;
 using PracticeAspNetCoreIdentity.Server.Identity;
 using PracticeAspNetCoreIdentity.Server.Identity.BackgroundServices;
-using PracticeAspNetCoreIdentity.Server.Identity.Middlewares;
 using PracticeAspNetCoreIdentity.Server.Identity.TokenProviders;
 using PracticeAspNetCoreIdentity.Server.Models;
 using Scalar.AspNetCore;
@@ -80,8 +79,6 @@ builder.Services.ConfigureApplicationCookie(o =>
     //o.SlidingExpiration = true; // default is true
 });
 
-builder.Services.AddDistributedMemoryCache();
-
 builder.Services.AddHostedService<CleanupUnconfirmEmailAccountService>();
 
 builder.Services.AddCors(options =>
@@ -107,7 +104,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWasm");
 app.UseAuthentication();
-app.UseMiddleware<CustomBanMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
