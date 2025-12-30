@@ -1,5 +1,3 @@
-using PracticeAspNetCoreIdentity.Client.Identity.Models;
-
 namespace PracticeAspNetCoreIdentity.Client.Identity;
 
 public interface IAccountManagement

@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Text;
 using System.Text.Encodings.Web;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -35,20 +33,17 @@ public class IdentityController(
     private const string ConfirmEmailRouteName = "ConfirmEmailRoute";
 
     [HttpPost("register")]
-    public async Task<Results<Ok, ValidationProblem>> Register([FromBody] RegisterRequest registration)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest registration)
     {
         if (!userManager.SupportsUserEmail)
-        {
             throw new NotSupportedException($"{nameof(IdentityController)} requires a user store with email support.");
-        }
 
         var emailStore = (IUserEmailStore<CustomUser>)userStore;
         var email = registration.Email;
 
         if (string.IsNullOrEmpty(email) || !_emailAddressAttribute.IsValid(email))
-        {
-            return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(email)));
-        }
+            return BadRequest(CreateIdentityProblemResponse(
+                IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(email))));
 
         var user = new CustomUser();
         await userStore.SetUserNameAsync(user, email, CancellationToken.None);
@@ -57,21 +52,20 @@ public class IdentityController(
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
         var result = await userManager.CreateAsync(user, registration.Password);
-        if (!result.Succeeded) return CreateValidationProblem(result);
+        if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
 
-        var roleResult = await userManager.AddToRoleAsync(user, UserRole.User);
-        if (!roleResult.Succeeded) return CreateValidationProblem(roleResult);
+        result = await userManager.AddToRoleAsync(user, UserRole.User);
+        if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
 
         await transaction.CommitAsync();
 
         await SendConfirmationEmailAsync(user, email);
-        return TypedResults.Ok();
+        return Ok();
     }
 
     [HttpPost("login")]
-    public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login(
-        [FromBody] LoginRequest login,
-        [FromQuery] bool? useCookies,
+    //Results<Ok<AccessTokenResponse>, >
+    public async Task<IActionResult> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies,
         [FromQuery] bool? useSessionCookies)
     {
         var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
@@ -79,35 +73,31 @@ public class IdentityController(
         signInManager.AuthenticationScheme =
             useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
-        var result =
-            await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent,
-                lockoutOnFailure: true);
+        var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent,
+            lockoutOnFailure: true);
 
         if (result.RequiresTwoFactor)
         {
             if (!string.IsNullOrEmpty(login.TwoFactorCode))
-            {
                 result = await signInManager.TwoFactorAuthenticatorSignInAsync(login.TwoFactorCode, isPersistent,
                     rememberClient: isPersistent);
-            }
             else if (!string.IsNullOrEmpty(login.TwoFactorRecoveryCode))
-            {
                 result = await signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
-            }
         }
+
+        if (result.IsLockedOut)
+            return BadRequest(CreateIdentityProblemResponse("TooManyFailedLoginAttempts",
+                "Too many failed login attempts have occurred. Please try again later."));
 
         if (!result.Succeeded)
-        {
-            return TypedResults.Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
-        }
-
+            return BadRequest(CreateIdentityProblemResponse("InvalidLogin",
+                "The provided login credentials are invalid. Please check your email and password and try again."));
         // The signInManager already produced the needed response in the form of a cookie or bearer token.
-        return TypedResults.Empty;
+        return Ok();
     }
 
     [HttpPost("cookie-google-login")]
-    public async Task<Results<Ok, BadRequest<List<string>>, ProblemHttpResult>> CookieGoogleLogin(
-        [FromBody] GoogleLoginRequest request)
+    public async Task<IActionResult> CookieGoogleLogin([FromBody] GoogleLoginRequest request)
     {
         try
         {
@@ -132,45 +122,46 @@ public class IdentityController(
 
                     await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
-                    var registerResult = await userManager.CreateAsync(user);
-                    if (!registerResult.Succeeded) return TypedResults.BadRequest(registerResult.Errors.Select(e => e.Description).ToList());
+                    var result = await userManager.CreateAsync(user);
+                    if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
 
-                    var roleResult = await userManager.AddToRoleAsync(user, UserRole.User);
-                    if (!roleResult.Succeeded) return TypedResults.BadRequest(roleResult.Errors.Select(e => e.Description).ToList());
+                    result = await userManager.AddToRoleAsync(user, UserRole.User);
+                    if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
 
-                    var addLoginResult = await userManager.AddLoginAsync(user,
+                    result = await userManager.AddLoginAsync(user,
                         new UserLoginInfo(Identity.Constants.LoginProvider.Google, payload.Subject,
                             Identity.Constants.LoginProvider.Google));
-                    if (!addLoginResult.Succeeded) return TypedResults.BadRequest(addLoginResult.Errors.Select(e => e.Description).ToList());
+                    if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
 
                     await transaction.CommitAsync();
                 }
                 else
                 {
-                    var addLoginResult = await userManager.AddLoginAsync(user,
+                    var result = await userManager.AddLoginAsync(user,
                         new UserLoginInfo(Identity.Constants.LoginProvider.Google, payload.Subject,
                             Identity.Constants.LoginProvider.Google));
-                    if (!addLoginResult.Succeeded) return TypedResults.BadRequest(addLoginResult.Errors.Select(e => e.Description).ToList());
+                    if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
                 }
             }
 
             await signInManager.SignInAsync(user, isPersistent: true);
-            return TypedResults.Ok();
+            return Ok();
         }
         catch (InvalidJwtException)
         {
-            return TypedResults.BadRequest(new List<string> { "Invalid Google ID token." });
+            return BadRequest(CreateIdentityProblemResponse("InvalidIdToken",
+                "The provided Google ID token is invalid."));
         }
         catch
         {
-            return TypedResults.Problem("An error occurred during Google login.",
+            return Problem("An error occurred during Google login.",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
+    //Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>
     [HttpPost("refresh")]
-    public async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>
-        RefreshToken([FromBody] RefreshRequest refreshRequest)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshRequest refreshRequest)
     {
         var refreshTokenProtector =
             bearerTokenOptions.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
@@ -180,26 +171,20 @@ public class IdentityController(
         if (refreshTicket?.Properties.ExpiresUtc is not { } expiresUtc ||
             timeProvider.GetUtcNow() >= expiresUtc ||
             await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not { } user)
-        {
-            return TypedResults.Challenge();
-        }
+            return Challenge();
 
         var newPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-        return TypedResults.SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
+        return SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
     }
 
     [HttpGet("confirm-email", Name = ConfirmEmailRouteName)]
-    public async Task<Results<ContentHttpResult, UnauthorizedHttpResult>> ConfirmEmail
-    (
-        [FromQuery] string userId,
-        [FromQuery] string code,
-        [FromQuery] string? changedEmail
-    )
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code,
+        [FromQuery] string? changedEmail)
     {
         if (await userManager.FindByIdAsync(userId) is not { } user)
         {
             // We could respond with a 404 instead of a 401 like Identity UI, but that feels like unnecessary information.
-            return TypedResults.Unauthorized();
+            return Unauthorized();
         }
 
         try
@@ -208,49 +193,38 @@ public class IdentityController(
         }
         catch (FormatException)
         {
-            return TypedResults.Unauthorized();
+            return Unauthorized();
         }
 
         IdentityResult result;
 
-        if (string.IsNullOrEmpty(changedEmail))
-        {
-            result = await userManager.ConfirmEmailAsync(user, code);
-        }
+        if (string.IsNullOrEmpty(changedEmail)) result = await userManager.ConfirmEmailAsync(user, code);
         else
         {
             // As with Identity UI, email and username are one and the same. So when we update the email,
             // we need to update the username.
             result = await userManager.ChangeEmailAsync(user, changedEmail, code);
 
-            if (result.Succeeded)
-            {
-                result = await userManager.SetUserNameAsync(user, changedEmail);
-            }
+            if (result.Succeeded) result = await userManager.SetUserNameAsync(user, changedEmail);
         }
 
-        if (!result.Succeeded)
-        {
-            return TypedResults.Unauthorized();
-        }
+        if (!result.Succeeded) return Unauthorized();
 
-        return TypedResults.Text("Thank you for confirming your email.");
+        return Content("Thank you for confirming your email.");
     }
 
     [HttpPost("resend-confirmation-email")]
-    public async Task<Ok> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest resendRequest)
+    public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest resendRequest)
     {
         var user = await userManager.FindByNameAsync(resendRequest.Email);
         if (user != null && !await userManager.IsEmailConfirmedAsync(user))
-        {
             await SendConfirmationEmailAsync(user, resendRequest.Email);
-        }
 
-        return TypedResults.Ok();
+        return Ok();
     }
 
     [HttpPost("forgot-password")]
-    public async Task<Results<Ok, ValidationProblem>> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
     {
         var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
@@ -264,11 +238,11 @@ public class IdentityController(
 
         // Don't reveal that the user does not exist or is not confirmed, so don't return a 200 if we had
         // returned a 400 for an invalid code given a valid user email.
-        return TypedResults.Ok();
+        return Ok();
     }
 
     [HttpPost("reset-password")]
-    public async Task<Results<Ok, ValidationProblem>> ResetPassword([FromBody] ResetPasswordRequest resetRequest)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetRequest)
     {
         var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
@@ -276,7 +250,8 @@ public class IdentityController(
         {
             // Don't reveal that the user does not exist or is not confirmed, so don't return a 200 if we had
             // returned a 400 for an invalid code given a valid user email.
-            return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken()));
+            return BadRequest(
+                CreateIdentityProblemResponse(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken())));
         }
 
         IdentityResult result;
@@ -290,64 +265,46 @@ public class IdentityController(
             result = IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken());
         }
 
-        if (!result.Succeeded)
-        {
-            return CreateValidationProblem(result);
-        }
+        if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
 
-        return TypedResults.Ok();
+        return Ok();
     }
 
     [HttpPost("cookie-logout")]
     [Authorize]
-    public async Task<Results<Ok, UnauthorizedHttpResult>> CookieLogout()
+    public async Task<IActionResult> CookieLogout()
     {
         await signInManager.SignOutAsync();
-        return TypedResults.Ok();
+        return Ok();
     }
 
     [HttpPost("manage/2fa")]
     [Authorize]
-    public async Task<Results<Ok<TwoFactorResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>> TwoFA(
-        [FromBody] TwoFactorRequest tfaRequest)
+    public async Task<IActionResult> TwoFA([FromBody] TwoFactorRequest tfaRequest)
     {
-        if (await userManager.GetUserAsync(User) is not { } user)
-        {
-            return TypedResults.NotFound();
-        }
+        if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
 
         if (tfaRequest.Enable == true)
         {
             if (tfaRequest.ResetSharedKey)
-            {
-                return CreateValidationProblem("CannotResetSharedKeyAndEnable",
-                    "Resetting the 2fa shared key must disable 2fa until a 2fa token based on the new shared key is validated.");
-            }
+                return BadRequest(CreateIdentityProblemResponse("CannotResetSharedKeyAndEnable",
+                    "Resetting the 2fa shared key must disable 2fa until a 2fa token based on the new shared key is validated."));
 
             if (string.IsNullOrEmpty(tfaRequest.TwoFactorCode))
-            {
-                return CreateValidationProblem("RequiresTwoFactor",
-                    "No 2fa token was provided by the request. A valid 2fa token is required to enable 2fa.");
-            }
+                return BadRequest(CreateIdentityProblemResponse("RequiresTwoFactor",
+                    "No 2fa token was provided by the request. A valid 2fa token is required to enable 2fa."));
 
             if (!await userManager.VerifyTwoFactorTokenAsync(user,
                     userManager.Options.Tokens.AuthenticatorTokenProvider, tfaRequest.TwoFactorCode))
-            {
-                return CreateValidationProblem("InvalidTwoFactorCode",
-                    "The 2fa token provided by the request was invalid. A valid 2fa token is required to enable 2fa.");
-            }
+                return BadRequest(CreateIdentityProblemResponse("InvalidTwoFactorCode",
+                    "The 2fa token provided by the request was invalid. A valid 2fa token is required to enable 2fa."));
 
             await userManager.SetTwoFactorEnabledAsync(user, true);
         }
         else if (tfaRequest.Enable == false || tfaRequest.ResetSharedKey)
-        {
             await userManager.SetTwoFactorEnabledAsync(user, false);
-        }
 
-        if (tfaRequest.ResetSharedKey)
-        {
-            await userManager.ResetAuthenticatorKeyAsync(user);
-        }
+        if (tfaRequest.ResetSharedKey) await userManager.ResetAuthenticatorKeyAsync(user);
 
         string[]? recoveryCodes = null;
         if (tfaRequest.ResetRecoveryCodes ||
@@ -357,10 +314,7 @@ public class IdentityController(
             recoveryCodes = recoveryCodesEnumerable?.ToArray();
         }
 
-        if (tfaRequest.ForgetMachine)
-        {
-            await signInManager.ForgetTwoFactorClientAsync();
-        }
+        if (tfaRequest.ForgetMachine) await signInManager.ForgetTwoFactorClientAsync();
 
         var key = await userManager.GetAuthenticatorKeyAsync(user);
         if (string.IsNullOrEmpty(key))
@@ -369,12 +323,10 @@ public class IdentityController(
             key = await userManager.GetAuthenticatorKeyAsync(user);
 
             if (string.IsNullOrEmpty(key))
-            {
                 throw new NotSupportedException("The user manager must produce an authenticator key after reset.");
-            }
         }
 
-        return TypedResults.Ok(new TwoFactorResponse
+        return Ok(new TwoFactorResponse
         {
             SharedKey = key,
             RecoveryCodes = recoveryCodes,
@@ -386,45 +338,33 @@ public class IdentityController(
 
     [HttpGet("manage/info")]
     [Authorize]
-    public async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>> Info()
+    //Results<Ok<InfoResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>
+    public async Task<IActionResult> Info()
     {
-        if (await userManager.GetUserAsync(User) is not { } user)
-        {
-            return TypedResults.NotFound();
-        }
+        if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
 
-        return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
+        return Ok(await CreateUserInfoDtoAsync(user, userManager));
     }
 
     [HttpPost("manage/info")]
     [Authorize]
-    public async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>> Info([FromBody] InfoRequest infoRequest)
+    public async Task<IActionResult> Info([FromBody] InfoRequest infoRequest)
     {
-        if (await userManager.GetUserAsync(User) is not { } user)
-        {
-            return TypedResults.NotFound();
-        }
+        if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
 
         if (!string.IsNullOrEmpty(infoRequest.NewEmail) && !_emailAddressAttribute.IsValid(infoRequest.NewEmail))
-        {
-            return CreateValidationProblem(
-                IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(infoRequest.NewEmail)));
-        }
+            return BadRequest(CreateIdentityProblemResponse(
+                IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(infoRequest.NewEmail))));
 
         if (!string.IsNullOrEmpty(infoRequest.NewPassword))
         {
             if (string.IsNullOrEmpty(infoRequest.OldPassword))
-            {
-                return CreateValidationProblem("OldPasswordRequired",
-                    "The old password is required to set a new password. If the old password is forgotten, use /resetPassword.");
-            }
+                return BadRequest(CreateIdentityProblemResponse("OldPasswordRequired",
+                    "The old password is required to set a new password. If the old password is forgotten, use /resetPassword."));
 
             var changePasswordResult =
                 await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
-            if (!changePasswordResult.Succeeded)
-            {
-                return CreateValidationProblem(changePasswordResult);
-            }
+            if (!changePasswordResult.Succeeded) return BadRequest(CreateIdentityProblemResponse(changePasswordResult));
         }
 
         if (!string.IsNullOrEmpty(infoRequest.NewEmail))
@@ -432,23 +372,23 @@ public class IdentityController(
             var email = await userManager.GetEmailAsync(user);
 
             if (email != infoRequest.NewEmail)
-            {
                 await SendConfirmationEmailAsync(user, infoRequest.NewEmail, isChange: true);
-            }
         }
 
-        return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
+        return Ok(await CreateUserInfoDtoAsync(user, userManager));
     }
 
     [HttpGet("manage/roles")]
     [Authorize]
-    public async Task<Results<Ok<IList<string>>, UnauthorizedHttpResult>> Roles()
+    public async Task<IActionResult> Roles()
     {
         var userDb = await userManager.GetUserAsync(User);
-        if (userDb == null) return TypedResults.Unauthorized();
+        if (userDb == null) return Unauthorized();
 
-        var roles = await userManager.GetRolesAsync(userDb);
-        return TypedResults.Ok(roles);
+        return Ok(new RolesDto
+        {
+            Roles = (await userManager.GetRolesAsync(userDb)).ToArray()
+        });
     }
 
     private async Task SendConfirmationEmailAsync(CustomUser user, string email, bool isChange = false)
@@ -477,48 +417,21 @@ public class IdentityController(
         await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
     }
 
-    private static ValidationProblem CreateValidationProblem(string errorCode, string errorDescription) =>
-        TypedResults.ValidationProblem(new Dictionary<string, string[]>
+    private static IdentityProblemResponse CreateIdentityProblemResponse(string errorCode, string errorDescription)
+        => new() { Errors = new Dictionary<string, string[]> { [errorCode] = [errorDescription] } };
+
+    private static IdentityProblemResponse CreateIdentityProblemResponse(IdentityResult result)
+        => new()
         {
-            { errorCode, [errorDescription] }
-        });
+            Errors = result.Errors.GroupBy(e => e.Code)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray())
+        };
 
-    private static ValidationProblem CreateValidationProblem(IdentityResult result)
-    {
-        // We expect a single error code and description in the normal case.
-        // This could be golfed with GroupBy and ToDictionary, but perf! :P
-        Debug.Assert(!result.Succeeded);
-        var errorDictionary = new Dictionary<string, string[]>(1);
-
-        foreach (var error in result.Errors)
-        {
-            string[] newDescriptions;
-
-            if (errorDictionary.TryGetValue(error.Code, out var descriptions))
-            {
-                newDescriptions = new string[descriptions.Length + 1];
-                Array.Copy(descriptions, newDescriptions, descriptions.Length);
-                newDescriptions[descriptions.Length] = error.Description;
-            }
-            else
-            {
-                newDescriptions = [error.Description];
-            }
-
-            errorDictionary[error.Code] = newDescriptions;
-        }
-
-        return TypedResults.ValidationProblem(errorDictionary);
-    }
-
-    private static async Task<InfoResponse> CreateInfoResponseAsync(CustomUser user,
-        UserManager<CustomUser> userManager)
-    {
-        return new InfoResponse
+    private static async Task<UserInfoDto> CreateUserInfoDtoAsync(CustomUser user, UserManager<CustomUser> userManager)
+        => new()
         {
             Email = await userManager.GetEmailAsync(user) ??
                     throw new NotSupportedException("Users must have an email."),
             IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
         };
-    }
 }
