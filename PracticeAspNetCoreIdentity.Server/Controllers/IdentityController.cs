@@ -26,8 +26,7 @@ public class IdentityController(
     IUserStore<CustomUser> userStore,
     IEmailSender<CustomUser> emailSender,
     IOptionsMonitor<BearerTokenOptions> bearerTokenOptions,
-    TimeProvider timeProvider,
-    LinkGenerator linkGenerator
+    TimeProvider timeProvider
 ) : ControllerBase
 {
     // Validate the email address using DataAnnotations like the UserValidator does when RequireUniqueEmail = true.
@@ -107,7 +106,8 @@ public class IdentityController(
     }
 
     [HttpPost("cookie-google-login")]
-    public async Task<IActionResult> CookieGoogleLogin([FromBody] GoogleLoginRequest request)
+    public async Task<Results<Ok, BadRequest<List<string>>, ProblemHttpResult>> CookieGoogleLogin(
+        [FromBody] GoogleLoginRequest request)
     {
         try
         {
@@ -133,15 +133,15 @@ public class IdentityController(
                     await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
                     var registerResult = await userManager.CreateAsync(user);
-                    if (!registerResult.Succeeded) return BadRequest(registerResult.Errors);
+                    if (!registerResult.Succeeded) return TypedResults.BadRequest(registerResult.Errors.Select(e => e.Description).ToList());
 
                     var roleResult = await userManager.AddToRoleAsync(user, UserRole.User);
-                    if (!roleResult.Succeeded) return BadRequest(roleResult.Errors);
+                    if (!roleResult.Succeeded) return TypedResults.BadRequest(roleResult.Errors.Select(e => e.Description).ToList());
 
                     var addLoginResult = await userManager.AddLoginAsync(user,
                         new UserLoginInfo(Identity.Constants.LoginProvider.Google, payload.Subject,
                             Identity.Constants.LoginProvider.Google));
-                    if (!addLoginResult.Succeeded) return BadRequest(addLoginResult.Errors);
+                    if (!addLoginResult.Succeeded) return TypedResults.BadRequest(addLoginResult.Errors.Select(e => e.Description).ToList());
 
                     await transaction.CommitAsync();
                 }
@@ -150,20 +150,21 @@ public class IdentityController(
                     var addLoginResult = await userManager.AddLoginAsync(user,
                         new UserLoginInfo(Identity.Constants.LoginProvider.Google, payload.Subject,
                             Identity.Constants.LoginProvider.Google));
-                    if (!addLoginResult.Succeeded) return BadRequest(addLoginResult.Errors);
+                    if (!addLoginResult.Succeeded) return TypedResults.BadRequest(addLoginResult.Errors.Select(e => e.Description).ToList());
                 }
             }
 
             await signInManager.SignInAsync(user, isPersistent: true);
-            return Ok();
+            return TypedResults.Ok();
         }
         catch (InvalidJwtException)
         {
-            return BadRequest("Invalid Google Token");
+            return TypedResults.BadRequest(new List<string> { "Invalid Google ID token." });
         }
         catch
         {
-            return Problem("An error occurred during Google login.");
+            return TypedResults.Problem("An error occurred during Google login.",
+                statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -299,15 +300,15 @@ public class IdentityController(
 
     [HttpPost("cookie-logout")]
     [Authorize]
-    public async Task<IActionResult> CookieLogout()
+    public async Task<Results<Ok, UnauthorizedHttpResult>> CookieLogout()
     {
         await signInManager.SignOutAsync();
-        return Ok();
+        return TypedResults.Ok();
     }
 
     [HttpPost("manage/2fa")]
     [Authorize]
-    public async Task<Results<Ok<TwoFactorResponse>, ValidationProblem, NotFound>> TwoFA(
+    public async Task<Results<Ok<TwoFactorResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>> TwoFA(
         [FromBody] TwoFactorRequest tfaRequest)
     {
         if (await userManager.GetUserAsync(User) is not { } user)
@@ -385,7 +386,7 @@ public class IdentityController(
 
     [HttpGet("manage/info")]
     [Authorize]
-    public async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound>> Info()
+    public async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>> Info()
     {
         if (await userManager.GetUserAsync(User) is not { } user)
         {
@@ -397,7 +398,7 @@ public class IdentityController(
 
     [HttpPost("manage/info")]
     [Authorize]
-    public async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound>> Info([FromBody] InfoRequest infoRequest)
+    public async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>> Info([FromBody] InfoRequest infoRequest)
     {
         if (await userManager.GetUserAsync(User) is not { } user)
         {
@@ -441,13 +442,13 @@ public class IdentityController(
 
     [HttpGet("manage/roles")]
     [Authorize]
-    public async Task<IActionResult> Roles()
+    public async Task<Results<Ok<IList<string>>, UnauthorizedHttpResult>> Roles()
     {
         var userDb = await userManager.GetUserAsync(User);
-        if (userDb == null) return Unauthorized();
+        if (userDb == null) return TypedResults.Unauthorized();
 
         var roles = await userManager.GetRolesAsync(userDb);
-        return Ok(roles);
+        return TypedResults.Ok(roles);
     }
 
     private async Task SendConfirmationEmailAsync(CustomUser user, string email, bool isChange = false)
@@ -458,7 +459,7 @@ public class IdentityController(
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
         var userId = await userManager.GetUserIdAsync(user);
-        var routeValues = new RouteValueDictionary()
+        var routeValues = new RouteValueDictionary
         {
             ["userId"] = userId,
             ["code"] = code,
@@ -470,10 +471,9 @@ public class IdentityController(
             routeValues.Add("changedEmail", email);
         }
 
-        var confirmEmailUrl = linkGenerator.GetUriByName(HttpContext, ConfirmEmailRouteName, routeValues) ??
+        var confirmEmailUrl = Url.Link(ConfirmEmailRouteName, routeValues) ??
                               throw new NotSupportedException(
                                   $"Could not find endpoint named '{ConfirmEmailRouteName}'.");
-
         await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
     }
 
