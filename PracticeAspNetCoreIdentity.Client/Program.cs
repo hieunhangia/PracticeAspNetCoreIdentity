@@ -15,7 +15,7 @@ builder.Services.AddScoped(sp => (IAccountManagement)sp.GetRequiredService<Authe
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<CookieHandler>();
 builder.Services
-    .AddHttpClient<WebApiHttpClient>(client => client.BaseAddress = new Uri(builder.Configuration["WebApiBaseUrl"]!))
+    .AddHttpClient<WebApiHttpClient>(client => client.BaseAddress = new Uri(builder.Configuration["WebApiUrl"]!))
     .AddHttpMessageHandler<CookieHandler>();
 
 await builder.Build().RunAsync();

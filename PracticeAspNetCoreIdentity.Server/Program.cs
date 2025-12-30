@@ -83,8 +83,8 @@ builder.Services.AddHostedService<CleanupUnconfirmEmailAccountService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowBlazorWasm",
-        policy => policy.WithOrigins(builder.Configuration["BlazorWasmOrigin"]!)
+    options.AddPolicy("AllowClient",
+        policy => policy.WithOrigins(builder.Configuration["ClientUrl"]!)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
@@ -102,7 +102,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowBlazorWasm");
+app.UseCors("AllowClient");
 app.UseAuthentication();
 app.UseAuthorization();
 
