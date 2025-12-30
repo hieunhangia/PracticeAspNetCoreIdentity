@@ -11,19 +11,19 @@ public class WebApiHttpClient(HttpClient client)
         => await client.PostAsJsonAsync("login?useCookies=true", new { email, password });
 
     public async Task<HttpResponseMessage> CookieGoogleLoginAsync(GoogleLoginRequest request)
-        => await client.PostAsJsonAsync("/cookie-google-login", request);
+        => await client.PostAsJsonAsync("cookie-google-login", request);
 
     public async Task<HttpResponseMessage> RegisterAsync(string email, string password)
         => await client.PostAsJsonAsync("register", new { email, password });
 
     public async Task<HttpResponseMessage> ResendConfirmationEmailAsync(string email)
-        => await client.PostAsJsonAsync("resendConfirmationEmail", new { email });
+        => await client.PostAsJsonAsync("resend-confirmation-email", new { email });
 
     public async Task<HttpResponseMessage> ForgotPasswordAsync(string email)
-        => await client.PostAsJsonAsync("forgotPassword", new { email });
+        => await client.PostAsJsonAsync("forgot-password", new { email });
 
     public async Task<HttpResponseMessage> ResetPasswordAsync(string email, string resetCode, string newPassword)
-        => await client.PostAsJsonAsync("resetPassword", new { email, resetCode, newPassword });
+        => await client.PostAsJsonAsync("reset-password", new { email, resetCode, newPassword });
 
     public async Task<HttpResponseMessage> GetUserInfoAsync()
         => await client.GetAsync("manage/info");

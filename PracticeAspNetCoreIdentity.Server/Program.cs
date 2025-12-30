@@ -107,7 +107,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapIdentityApi();
 
 
 app.Run();
