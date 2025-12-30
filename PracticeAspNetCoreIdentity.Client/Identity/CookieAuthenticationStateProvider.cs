@@ -43,7 +43,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
     {
         using var response = await webApiHttpClient.CookieLoginAsync(email, password);
         if (!response.IsSuccessStatusCode)
-            return ApiResult.Failure((await response.Content.ReadFromJsonAsync<IdentityProblemResponse>())?
+            return ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
                 .Errors?.Values.SelectMany(x => x).ToList() ?? []);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         return ApiResult.Success();
@@ -54,7 +54,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         using var response =
             await webApiHttpClient.CookieGoogleLoginAsync(new GoogleLoginRequest { IdToken = idToken });
         if (!response.IsSuccessStatusCode)
-            return ApiResult.Failure((await response.Content.ReadFromJsonAsync<IdentityProblemResponse>())?
+            return ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
                 .Errors?.Values.SelectMany(x => x).ToList() ?? []);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         return ApiResult.Success();
@@ -65,7 +65,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         using var response = await webApiHttpClient.RegisterAsync(email, password);
         return response.IsSuccessStatusCode
             ? ApiResult.Success()
-            : ApiResult.Failure((await response.Content.ReadFromJsonAsync<IdentityProblemResponse>())?
+            : ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
                 .Errors?.Values.SelectMany(x => x).ToList() ?? []);
     }
 
@@ -98,7 +98,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         using var response = await webApiHttpClient.ResetPasswordAsync(email, resetCode, newPassword);
         return response.IsSuccessStatusCode
             ? ApiResult.Success()
-            : ApiResult.Failure((await response.Content.ReadFromJsonAsync<IdentityProblemResponse>())?
+            : ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
                 .Errors?.Values.SelectMany(x => x).ToList() ?? []);
     }
 }
