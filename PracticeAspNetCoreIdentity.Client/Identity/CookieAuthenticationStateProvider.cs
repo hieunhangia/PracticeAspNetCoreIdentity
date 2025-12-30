@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
 using PracticeAspNetCoreIdentity.Client.Identity.Models;
-using PracticeAspNetCoreIdentity.Shared.Models;
+using PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 namespace PracticeAspNetCoreIdentity.Client.Identity;
 

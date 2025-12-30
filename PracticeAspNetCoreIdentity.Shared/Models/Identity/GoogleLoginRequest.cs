@@ -1,4 +1,4 @@
-namespace PracticeAspNetCoreIdentity.Shared.Models;
+namespace PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 public class GoogleLoginRequest
 {

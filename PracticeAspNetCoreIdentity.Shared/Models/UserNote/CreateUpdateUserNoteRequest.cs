@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PracticeAspNetCoreIdentity.Shared.Models;
+namespace PracticeAspNetCoreIdentity.Shared.Models.UserNote;
 
 public class CreateUpdateUserNoteRequest
 {

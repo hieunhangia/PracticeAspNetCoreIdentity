@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using PracticeAspNetCoreIdentity.Shared.Constants;
-using PracticeAspNetCoreIdentity.Shared.Models;
+using PracticeAspNetCoreIdentity.Shared.Models.Identity;
+using PracticeAspNetCoreIdentity.Shared.Models.UserNote;
 
 namespace PracticeAspNetCoreIdentity.Client;
 

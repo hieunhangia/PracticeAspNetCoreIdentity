@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server.Models;
-using PracticeAspNetCoreIdentity.Shared.Models;
+using PracticeAspNetCoreIdentity.Shared.Models.UserNote;
 
 namespace PracticeAspNetCoreIdentity.Server.Controllers;
 

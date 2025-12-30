@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
-using PracticeAspNetCoreIdentity.Shared.Models;
+using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
 
 namespace PracticeAspNetCoreIdentity.Server.Controllers;
 

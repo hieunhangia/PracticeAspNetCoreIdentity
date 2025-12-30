@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
-using PracticeAspNetCoreIdentity.Shared.Models;
+using PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 namespace PracticeAspNetCoreIdentity.Server.Controllers;
 
