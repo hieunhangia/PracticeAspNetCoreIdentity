@@ -33,6 +33,8 @@ public class IdentityController(
     private const string ConfirmEmailRouteName = "ConfirmEmailRoute";
 
     [HttpPost("register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IdentityProblemResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registration)
     {
         if (!userManager.SupportsUserEmail)
@@ -64,7 +66,9 @@ public class IdentityController(
     }
 
     [HttpPost("login")]
-    //Results<Ok<AccessTokenResponse>, >
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AccessTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IdentityProblemResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies,
         [FromQuery] bool? useSessionCookies)
     {
@@ -92,11 +96,14 @@ public class IdentityController(
         if (!result.Succeeded)
             return BadRequest(CreateIdentityProblemResponse("InvalidLogin",
                 "The provided login credentials are invalid. Please check your email and password and try again."));
+
         // The signInManager already produced the needed response in the form of a cookie or bearer token.
         return Ok();
     }
 
     [HttpPost("cookie-google-login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IdentityProblemResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CookieGoogleLogin([FromBody] GoogleLoginRequest request)
     {
         try
@@ -159,8 +166,9 @@ public class IdentityController(
         }
     }
 
-    //Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>
     [HttpPost("refresh")]
+    [ProducesResponseType(typeof(AccessTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshRequest refreshRequest)
     {
         var refreshTokenProtector =
@@ -178,6 +186,7 @@ public class IdentityController(
     }
 
     [HttpGet("confirm-email", Name = ConfirmEmailRouteName)]
+    [ProducesResponseType(StatusCodes.Status302Found)]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code,
         [FromQuery] string? changedEmail)
     {
@@ -214,6 +223,7 @@ public class IdentityController(
     }
 
     [HttpPost("resend-confirmation-email")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest resendRequest)
     {
         var user = await userManager.FindByNameAsync(resendRequest.Email);
@@ -224,6 +234,7 @@ public class IdentityController(
     }
 
     [HttpPost("forgot-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
     {
         var user = await userManager.FindByEmailAsync(resetRequest.Email);
@@ -242,6 +253,8 @@ public class IdentityController(
     }
 
     [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IdentityProblemResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetRequest)
     {
         var user = await userManager.FindByEmailAsync(resetRequest.Email);
@@ -272,6 +285,8 @@ public class IdentityController(
 
     [HttpPost("cookie-logout")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CookieLogout()
     {
         await signInManager.SignOutAsync();
@@ -280,6 +295,10 @@ public class IdentityController(
 
     [HttpPost("manage/2fa")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IdentityProblemResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> TwoFA([FromBody] TwoFactorRequest tfaRequest)
     {
         if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
@@ -338,7 +357,9 @@ public class IdentityController(
 
     [HttpGet("manage/info")]
     [Authorize]
-    //Results<Ok<InfoResponse>, ValidationProblem, NotFound, UnauthorizedHttpResult>
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Info()
     {
         if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
@@ -348,6 +369,10 @@ public class IdentityController(
 
     [HttpPost("manage/info")]
     [Authorize]
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IdentityProblemResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Info([FromBody] InfoRequest infoRequest)
     {
         if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
@@ -380,6 +405,8 @@ public class IdentityController(
 
     [HttpGet("manage/roles")]
     [Authorize]
+    [ProducesResponseType(typeof(RolesDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Roles()
     {
         var userDb = await userManager.GetUserAsync(User);
