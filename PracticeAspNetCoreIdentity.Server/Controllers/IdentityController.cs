@@ -148,6 +148,13 @@ public class IdentityController(
                         new UserLoginInfo(Identity.Constants.LoginProvider.Google, payload.Subject,
                             Identity.Constants.LoginProvider.Google));
                     if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
+
+                    if (!user.EmailConfirmed)
+                    {
+                        user.EmailConfirmed = true;
+                        result = await userManager.UpdateAsync(user);
+                        if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
+                    }
                 }
             }
 
