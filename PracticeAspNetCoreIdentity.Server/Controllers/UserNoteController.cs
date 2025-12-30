@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PracticeAspNetCoreIdentity.Server.Controllers.ActionFilterAttributes;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Models.UserNote;
 
@@ -10,6 +11,7 @@ namespace PracticeAspNetCoreIdentity.Server.Controllers;
 [ApiController]
 [Route("notes")]
 [Authorize]
+[RequireConfirmedEmail]
 public class UserNoteController(AppDbContext context) : ControllerBase
 {
     [HttpGet]
@@ -52,7 +54,12 @@ public class UserNoteController(AppDbContext context) : ControllerBase
         var userNote = new UserNote { UserId = userId, Name = request.Name!, Content = request.Content! };
         context.UserNotes.Add(userNote);
         await context.SaveChangesAsync();
-        return CreatedAtAction("GetUserNoteById", new { id = userNote.Id }, userNote);
+        return CreatedAtAction("GetUserNoteById", new { id = userNote.Id }, new UserNoteDto
+        {
+            Id = userNote.Id,
+            Name = userNote.Name,
+            Content = userNote.Content
+        });
     }
 
     [HttpPut]
