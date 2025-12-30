@@ -77,12 +77,12 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         return ApiResult.Success();
     }
 
-    public async Task<ApiResult> ResendConfirmationEmailAsync(string email)
+    public async Task<ApiResult> SendConfirmationEmailAsync(string email)
     {
-        using var response = await webApiHttpClient.ResendConfirmationEmailAsync(email);
+        using var response = await webApiHttpClient.SendConfirmationEmailAsync(email);
         return response.IsSuccessStatusCode
             ? ApiResult.Success()
-            : ApiResult.Failure("Failed to resend confirmation email.");
+            : ApiResult.Failure("Failed to send confirmation email.");
     }
 
     public async Task<ApiResult> ForgotPasswordAsync(string email)

@@ -27,11 +27,7 @@
 
 @if (RegisteredSuccessfully)
 {
-    <div class="alert alert-success mt-3" role="alert">
-        Registration successful! You must now confirm your account by clicking the link in the email that was sent to
-        you. After confirming your account, you can <a href="login">login</a> to the app.
-        <button @onclick="ResendConfirmationEmailAsync">Resend confirmation email</button>
-    </div>
+    <p>Registration successful! Now you can <a href="@Constants.Route.Login">login</a> to the app.</p>
 }
 
 @using System.ComponentModel.DataAnnotations
@@ -76,18 +72,4 @@
             await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.ErrorList));
         }
     }
-
-    private async Task ResendConfirmationEmailAsync()
-    {
-        var result = await AccountManagement.ResendConfirmationEmailAsync(Email);
-        if (result.Succeeded)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "A new confirmation email has been sent if the email is not already confirmed.");
-        }
-        else
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Failed to resend confirmation email. Please try again later.");
-        }
-    }
-
 }

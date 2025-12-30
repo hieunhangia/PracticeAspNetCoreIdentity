@@ -60,8 +60,6 @@ public class IdentityController(
         if (!result.Succeeded) return BadRequest(CreateIdentityProblemResponse(result));
 
         await transaction.CommitAsync();
-
-        await SendConfirmationEmailAsync(user, email);
         return Ok();
     }
 
@@ -235,13 +233,13 @@ public class IdentityController(
             : $"{clientUrl}/email-confirmation?success=true");
     }
 
-    [HttpPost("resend-confirmation-email")]
+    [HttpPost("send-confirmation-email")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest resendRequest)
+    public async Task<IActionResult> SendConfirmationEmail([FromBody] ResendConfirmationEmailRequest request)
     {
-        var user = await userManager.FindByNameAsync(resendRequest.Email);
+        var user = await userManager.FindByNameAsync(request.Email);
         if (user != null && !await userManager.IsEmailConfirmedAsync(user))
-            await SendConfirmationEmailAsync(user, resendRequest.Email);
+            await SendConfirmationEmailAsync(user, request.Email);
 
         return Ok();
     }

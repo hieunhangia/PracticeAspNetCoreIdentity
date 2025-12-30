@@ -15,14 +15,14 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
              </head>
              <body>
                 Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.<br>
-                This link is valid for {TokenExpiredTime.EmailConfirmationHours} hours. During this time, your email is reserved, so you won't need to register again.
+                This link is valid for {TokenExpiredTime.EmailConfirmationHours} hours.<br>
                 If you didn't request this, you can safely ignore this email.
              </body>
              </html>
              """);
 
     public Task SendPasswordResetLinkAsync(CustomUser user, string email, string resetLink)
-        => Task.CompletedTask; // Redundant method when using MapIdentityApi
+        => Task.CompletedTask; // Redundant method when using Identity Api
 
     public Task SendPasswordResetCodeAsync(CustomUser user, string email, string resetCode)
         => SendEmailAsync(email, "Reset your password",
@@ -32,7 +32,8 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
              </head>
              <body>
                 Please reset your password using the following code:<br>{resetCode}<br>
-                Code will expire in {TokenExpiredTime.PasswordResetCodeMinutes} minute(s).
+                Code will expire in {TokenExpiredTime.PasswordResetCodeMinutes} minutes.<br>
+                If you didn't request this, you can safely ignore this email.
              </body>
              </html>
              """);

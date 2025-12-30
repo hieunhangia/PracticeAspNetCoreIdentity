@@ -2,8 +2,6 @@ using FluentEmail.MailKitSmtp;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server;
-using PracticeAspNetCoreIdentity.Server.Identity;
-using PracticeAspNetCoreIdentity.Server.Identity.BackgroundServices;
 using PracticeAspNetCoreIdentity.Server.Identity.TokenProviders;
 using PracticeAspNetCoreIdentity.Server.Models;
 using Scalar.AspNetCore;
@@ -50,7 +48,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     //options.Password.RequiredLength = 6; // default is 6
     //options.Password.RequiredUniqueChars = 1; // default is 1
 
-    options.SignIn.RequireConfirmedEmail = true; //default is false
+    //options.SignIn.RequireConfirmedEmail = false; //default is false
     //options.SignIn.RequireConfirmedAccount = false; //default is false
     //options.SignIn.RequireConfirmedPhoneNumber = false; //default is false
 
@@ -78,8 +76,6 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.ExpireTimeSpan = TimeSpan.FromDays(365); // default is 14 days
     //o.SlidingExpiration = true; // default is true
 });
-
-builder.Services.AddHostedService<CleanupUnconfirmEmailAccountService>();
 
 builder.Services.AddCors(options =>
 {
