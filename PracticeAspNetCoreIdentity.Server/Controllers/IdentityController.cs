@@ -190,10 +190,11 @@ public class IdentityController(
     public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code,
         [FromQuery] string? changedEmail)
     {
+        var clientUrl = configuration["ClientUrl"];
         if (await userManager.FindByIdAsync(userId) is not { } user)
         {
             // We could respond with a 404 instead of a 401 like Identity UI, but that feels like unnecessary information.
-            return Unauthorized();
+            return Redirect($"{clientUrl}/email-confirmation?success=false");
         }
 
         try
@@ -202,7 +203,7 @@ public class IdentityController(
         }
         catch (FormatException)
         {
-            return Unauthorized();
+            return Redirect($"{clientUrl}/email-confirmation?success=false");
         }
 
         IdentityResult result;
@@ -217,9 +218,9 @@ public class IdentityController(
             if (result.Succeeded) result = await userManager.SetUserNameAsync(user, changedEmail);
         }
 
-        if (!result.Succeeded) return Unauthorized();
-
-        return Content("Thank you for confirming your email.");
+        return Redirect(!result.Succeeded
+            ? $"{clientUrl}/email-confirmation?success=false"
+            : $"{clientUrl}/email-confirmation?success=true");
     }
 
     [HttpPost("resend-confirmation-email")]

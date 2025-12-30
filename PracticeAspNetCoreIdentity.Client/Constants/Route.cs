@@ -7,6 +7,7 @@ public static class Route
     public const string Login = "/login";
     public const string Register = "/register";
     public const string ForgotPassword = "/forgot-password";
+    public const string EmailConfirmation = "/email-confirmation";
 
     public const string AdminAllAccounts = "/admin/all-accounts";
     public const string AdminAccountDetail = "/admin/account-detail";

@@ -1,0 +1,20 @@
+@attribute [Route(Constants.Route.EmailConfirmation)]
+
+<h3>Email Confirmation Result</h3>
+
+@switch (Success)
+{
+    case true:
+        <p>Your email has been successfully confirmed. You can now <a href="@Constants.Route.Login">log in</a></p>
+        break;
+    case false:
+        <p>Email confirmation failed. Please try again.</p>
+        break;
+    default:
+        <p>Invalid request.</p>
+        break;
+}
+
+@code {
+    [SupplyParameterFromQuery] private bool? Success { get; set; }
+}
