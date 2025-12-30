@@ -110,6 +110,11 @@ public class IdentityController(
         {
             var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken,
                 new GoogleJsonWebSignature.ValidationSettings { Audience = [configuration["GoogleClientId"]] });
+
+            if (!payload.EmailVerified)
+                return BadRequest(CreateIdentityProblemResponse("UnverifiedEmail",
+                    "The email address is not verified by Google and cannot be used to log in."));
+
             var user = await userManager.FindByLoginAsync(Identity.Constants.LoginProvider.Google, payload.Subject);
             if (user == null)
             {
