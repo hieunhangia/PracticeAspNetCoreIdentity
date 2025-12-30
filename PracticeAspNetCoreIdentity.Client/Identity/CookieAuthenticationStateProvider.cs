@@ -21,6 +21,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         {
             new(ClaimTypes.Name, userInfo.Email),
             new(ClaimTypes.Email, userInfo.Email),
+            new(Constants.ClaimTypes.IsEmailConfirmed, userInfo.IsEmailConfirmed.ToString()),
         };
 
         using var rolesResponse = await webApiHttpClient.GetUserRolesAsync();

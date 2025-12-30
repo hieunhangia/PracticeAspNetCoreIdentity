@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using System.Security.Claims
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="top-row px-4">
@@ -9,6 +10,10 @@
                 <AuthorizeView Roles="@UserRole.Administrator" Context="_">
                     <a href="@Constants.Route.AdminAllAccounts">Manage Accounts</a>
                 </AuthorizeView>
+                @if (context.User.Claims.FirstOrDefault(c => c.Type == Constants.ClaimTypes.IsEmailConfirmed)?.Value == bool.FalseString)
+                {
+                    <span>Email Not Confirmed. <button @onclick="SendConfirmationEmailAsync">Send confirmation email now</button></span>
+                }
                 <a href="@Constants.Route.AllNotes">My Notes</a>
                 <button @onclick="LogoutAsync">Logout</button>
             </Authorized>
@@ -29,6 +34,8 @@
 @code
 {
 
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = null!;
+
     private async Task LogoutAsync()
     {
         var result = await AccountManagement.CookieLogoutAsync();
@@ -41,4 +48,17 @@
         NavigationManager.NavigateTo(Constants.Route.Home);
     }
 
+    private async Task SendConfirmationEmailAsync()
+    {
+        var authState = await AuthStateTask;
+        var user = authState.User;
+        var result = await AccountManagement.SendConfirmationEmailAsync(
+            user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? string.Empty);
+        if (!result.Succeeded)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.ErrorList));
+            return;
+        }
+        await JSRuntime.InvokeVoidAsync("alert", "Confirmation email sent. Please check your inbox.");
+    }
 }
