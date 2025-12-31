@@ -42,7 +42,7 @@ public class WebApiHttpClient(HttpClient client)
         => await ApiResult.CreateAsync<RolesDto>(await client.GetAsync("manage/roles"));
 
 
-    // Account Management
+    // Admin Account Management
     public async Task<ApiResult<IEnumerable<AccountSummaryDto>>> GetAllAccountsAsync(int page = 1, int pageSize = 10,
         string orderBy = AccountOrderBy.EmailAsc)
         => await ApiResult.CreateAsync<IEnumerable<AccountSummaryDto>>(

@@ -1,4 +1,5 @@
 @using Microsoft.AspNetCore.Authorization
+@using PracticeAspNetCoreIdentity.Client.AdminAccountManagement
 @using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement
 @attribute [Route(Constants.Route.AdminAllAccounts)]
 @attribute [Authorize(Roles = UserRole.Administrator)]
@@ -38,7 +39,7 @@
     <button @onclick="NextPage">Next</button>
 }
 
-@inject WebApiHttpClient WebApiHttpClient
+@inject IAdminAccountManagement AdminAccountManagement
 @inject IJSRuntime JsRuntime
 
 @code {
@@ -51,7 +52,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await WebApiHttpClient.GetAccountCountAsync();
+        var result = await AdminAccountManagement.GetAccountCountAsync();
         if (result.Succeeded) TotalAccounts = result.Data;
         else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
 
@@ -84,7 +85,7 @@
 
     private async Task LoadAccounts()
     {
-        var result = await WebApiHttpClient.GetAllAccountsAsync(Page, PageSize, OrderBy);
+        var result = await AdminAccountManagement.GetAllAccountsAsync(Page, PageSize, OrderBy);
 
         if (result.Succeeded) Accounts = result.Data!;
         else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
