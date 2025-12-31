@@ -37,10 +37,7 @@
         var authState = await AuthStateTask;
         var user = authState.User;
 
-        if (user.Identity is { IsAuthenticated: true })
-        {
-            NavigationManager.NavigateTo(Constants.Route.Home);
-        }
+        if (user.Identity is { IsAuthenticated: true }) NavigationManager.NavigateTo(Constants.Route.Home);
     }
 
     [Required] [EmailAddress] public string Email { get; set; } = string.Empty;
@@ -50,14 +47,8 @@
     private async Task LoginAsync()
     {
         var result = await AccountManagement.CookieLoginAsync(Email, Password);
-        if (result.Succeeded)
-        {
-            NavigationManager.NavigateTo(Constants.Route.Home);
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", $"Login failed. \n{string.Join("\n", result.ErrorList)}");
-        }
+        if (result.Succeeded) NavigationManager.NavigateTo(Constants.Route.Home);
+        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
 }

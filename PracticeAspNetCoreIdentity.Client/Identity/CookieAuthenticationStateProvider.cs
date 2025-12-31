@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using PracticeAspNetCoreIdentity.Shared.Models.Identity;
@@ -10,29 +9,25 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 {
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        using var userResponse = await webApiHttpClient.GetUserInfoAsync();
-        if (!userResponse.IsSuccessStatusCode)
+        var userInfoResult = await webApiHttpClient.GetUserInfoAsync();
+        if (!userInfoResult.Succeeded || userInfoResult.Data == null)
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-
-        var userInfo = await userResponse.Content.ReadFromJsonAsync<UserInfoDto>();
-        if (userInfo == null) return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Name, userInfo.Email),
-            new(ClaimTypes.Email, userInfo.Email),
-            new(Constants.ClaimTypes.IsEmailConfirmed, userInfo.IsEmailConfirmed.ToString()),
+            new(ClaimTypes.Name, userInfoResult.Data.Email ?? string.Empty),
+            new(ClaimTypes.Email, userInfoResult.Data.Email ?? string.Empty),
+            new(Constants.ClaimTypes.IsEmailConfirmed, userInfoResult.Data.IsEmailConfirmed.ToString()),
         };
 
-        using var rolesResponse = await webApiHttpClient.GetUserRolesAsync();
+        var rolesResult = await webApiHttpClient.GetUserRolesAsync();
 
-        if (!rolesResponse.IsSuccessStatusCode)
+        if (!rolesResult.Succeeded)
             return new AuthenticationState(
                 new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));
 
-        var roles = await rolesResponse.Content.ReadFromJsonAsync<RolesDto>();
-        if (roles is { Roles: not null })
-            claims.AddRange(roles.Roles
+        if (rolesResult.Data is { Roles: not null })
+            claims.AddRange(rolesResult.Data.Roles
                 .Where(role => !string.IsNullOrWhiteSpace(role))
                 .Select(role => new Claim(ClaimTypes.Role, role)));
 
@@ -42,64 +37,33 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 
     public async Task<ApiResult> CookieLoginAsync(string email, string password)
     {
-        using var response = await webApiHttpClient.CookieLoginAsync(email, password);
-        if (!response.IsSuccessStatusCode)
-            return ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
-                .Errors?.Values.SelectMany(x => x).ToList() ?? []);
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-        return ApiResult.Success();
+        var result = await webApiHttpClient.CookieLoginAsync(email, password);
+        if (result.Succeeded) NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        return result;
     }
 
     public async Task<ApiResult> CookieGoogleLoginAsync(string idToken)
     {
-        using var response =
-            await webApiHttpClient.CookieGoogleLoginAsync(new GoogleLoginRequest { IdToken = idToken });
-        if (!response.IsSuccessStatusCode)
-            return ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
-                .Errors?.Values.SelectMany(x => x).ToList() ?? []);
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-        return ApiResult.Success();
+        var result = await webApiHttpClient.CookieGoogleLoginAsync(new GoogleLoginRequest { IdToken = idToken });
+        if (result.Succeeded) NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        return result;
     }
 
-    public async Task<ApiResult> RegisterAsync(string email, string password)
-    {
-        using var response = await webApiHttpClient.RegisterAsync(email, password);
-        return response.IsSuccessStatusCode
-            ? ApiResult.Success()
-            : ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
-                .Errors?.Values.SelectMany(x => x).ToList() ?? []);
-    }
+    public async Task<ApiResult> RegisterAsync(string email, string password) =>
+        await webApiHttpClient.RegisterAsync(email, password);
 
     public async Task<ApiResult> CookieLogoutAsync()
     {
-        using var response = await webApiHttpClient.CookieLogoutAsync();
-        if (!response.IsSuccessStatusCode) return ApiResult.Failure("Logout failed.");
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-        return ApiResult.Success();
+        var result = await webApiHttpClient.CookieLogoutAsync();
+        if (result.Succeeded) NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        return result;
     }
 
-    public async Task<ApiResult> SendConfirmationEmailAsync(string email)
-    {
-        using var response = await webApiHttpClient.SendConfirmationEmailAsync(email);
-        return response.IsSuccessStatusCode
-            ? ApiResult.Success()
-            : ApiResult.Failure("Failed to send confirmation email.");
-    }
+    public async Task<ApiResult> SendConfirmationEmailAsync(string email) =>
+        await webApiHttpClient.SendConfirmationEmailAsync(email);
 
-    public async Task<ApiResult> ForgotPasswordAsync(string email)
-    {
-        using var response = await webApiHttpClient.ForgotPasswordAsync(email);
-        return response.IsSuccessStatusCode
-            ? ApiResult.Success()
-            : ApiResult.Failure("Failed to process forgot password request.");
-    }
+    public async Task<ApiResult> ForgotPasswordAsync(string email) => await webApiHttpClient.ForgotPasswordAsync(email);
 
-    public async Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword)
-    {
-        using var response = await webApiHttpClient.ResetPasswordAsync(email, resetCode, newPassword);
-        return response.IsSuccessStatusCode
-            ? ApiResult.Success()
-            : ApiResult.Failure((await response.Content.ReadFromJsonAsync<ApiValidationProblemDetails>())?
-                .Errors?.Values.SelectMany(x => x).ToList() ?? []);
-    }
+    public async Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword) =>
+        await webApiHttpClient.ResetPasswordAsync(email, resetCode, newPassword);
 }

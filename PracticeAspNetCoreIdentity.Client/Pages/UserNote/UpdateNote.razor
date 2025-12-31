@@ -40,36 +40,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var response = await WebApiHttpClient.GetNoteByIdAsync(NoteId);
-        if (response.IsSuccessStatusCode)
+        var result = await WebApiHttpClient.GetNoteByIdAsync(NoteId);
+        if (result.Succeeded)
         {
-            var note = await response.Content.ReadFromJsonAsync<UserNoteDto>();
-            if (note != null)
-            {
-                UpdatingNote.Name = note.Name;
-                UpdatingNote.Content = note.Content;
-            }
-
+            var note = result.Data!;
+            UpdatingNote.Name = note.Name;
+            UpdatingNote.Content = note.Content;
             IsLoadedNoteSuccessfully = true;
         }
         else
         {
-            await JsRuntime.InvokeVoidAsync("alert", "Error fetching the note.");
+            await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
             IsLoadedNoteSuccessfully = false;
         }
     }
 
     private async Task UpdateNoteAsync()
     {
-        var response = await WebApiHttpClient.UpdateNoteAsync(NoteId, UpdatingNote);
-        if (response.IsSuccessStatusCode)
-        {
-            NavigationManager.NavigateTo(Constants.Route.AllNotes);
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error updating the note.");
-        }
+        var result = await WebApiHttpClient.UpdateNoteAsync(NoteId, UpdatingNote);
+        if (result.Succeeded) NavigationManager.NavigateTo(Constants.Route.AllNotes);
+        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
 }

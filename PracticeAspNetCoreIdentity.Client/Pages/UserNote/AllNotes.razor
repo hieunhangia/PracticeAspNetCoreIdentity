@@ -37,30 +37,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var response = await WebApiHttpClient.GetAllNotesAsync();
-        if (response.IsSuccessStatusCode)
-        {
-            UserNotes = await response.Content.ReadFromJsonAsync<IEnumerable<UserNoteDto>>() ?? [];
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error fetching notes.");
-        }
+        var result = await WebApiHttpClient.GetAllNotesAsync();
+        if (result.Succeeded) UserNotes = result.Data!;
+        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
     private async Task DeleteNote(Guid noteId)
     {
         if (!await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this note?")) return;
 
-        var response = await WebApiHttpClient.DeleteNoteAsync(noteId);
-        if (response.IsSuccessStatusCode)
-        {
-            UserNotes = UserNotes.Where(n => n.Id != noteId);
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error deleting note.");
-        }
+        var result = await WebApiHttpClient.DeleteNoteAsync(noteId);
+        if (result.Succeeded) UserNotes = UserNotes.Where(n => n.Id != noteId);
+        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
 }

@@ -50,7 +50,7 @@
         var result = await AccountManagement.CookieGoogleLoginAsync(idToken);
 
         if (result.Succeeded) Navigation.NavigateTo(Constants.Route.Home);
-        else await JSRuntime.InvokeVoidAsync("alert", $"Google login failed:\n{string.Join("\n", result.ErrorList)}");
+        else await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
     public void Dispose() => DotNetHelper?.Dispose();

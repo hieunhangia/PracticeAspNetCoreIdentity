@@ -63,13 +63,8 @@
     private async Task RegisterAsync()
     {
         var result = await AccountManagement.RegisterAsync(Email, Password);
-        if (result.Succeeded)
-        {
-            RegisteredSuccessfully = true;
-        }
-        else
-        {
-            await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.ErrorList));
-        }
+        if (result.Succeeded) RegisteredSuccessfully = true;
+        else await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
+
 }

@@ -33,15 +33,9 @@
 
     private async Task AddNoteAsync()
     {
-        var response = await WebApiHttpClient.AddNoteAsync(NewNote);
-        if (response.IsSuccessStatusCode)
-        {
-            NavigationManager.NavigateTo(Constants.Route.AllNotes);
-        }
-        else
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Failed to add note.");
-        }
+        var result = await WebApiHttpClient.AddNoteAsync(NewNote);
+        if (result.Succeeded) NavigationManager.NavigateTo(Constants.Route.AllNotes);
+        else await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
 }

@@ -22,15 +22,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var response = await WebApiHttpClient.GetAccountByIdAsync(AccountId);
-        if (response.IsSuccessStatusCode)
-        {
-            Account = await response.Content.ReadFromJsonAsync<AccountDetailDto>() ?? new AccountDetailDto();
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error fetching account details.");
-        }
+        var result = await WebApiHttpClient.GetAccountByIdAsync(AccountId);
+        if (result.Succeeded) Account = result.Data!;
+        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
 }

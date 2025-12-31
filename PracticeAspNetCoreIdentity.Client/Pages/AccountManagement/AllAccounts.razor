@@ -51,15 +51,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var totalResponse = await WebApiHttpClient.GetAccountCountAsync();
-        if (totalResponse.IsSuccessStatusCode)
-        {
-            TotalAccounts = await totalResponse.Content.ReadFromJsonAsync<int>();
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error fetching account count.");
-        }
+        var result = await WebApiHttpClient.GetAccountCountAsync();
+        if (result.Succeeded) TotalAccounts = result.Data;
+        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
 
         await LoadAccounts();
     }
@@ -90,16 +84,10 @@
 
     private async Task LoadAccounts()
     {
-        var response = await WebApiHttpClient.GetAllAccountsAsync(Page, PageSize, OrderBy);
+        var result = await WebApiHttpClient.GetAllAccountsAsync(Page, PageSize, OrderBy);
 
-        if (response.IsSuccessStatusCode)
-        {
-            Accounts = await response.Content.ReadFromJsonAsync<IEnumerable<AccountSummaryDto>>() ?? [];
-        }
-        else
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Error fetching accounts.");
-        }
+        if (result.Succeeded) Accounts = result.Data!;
+        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
 }

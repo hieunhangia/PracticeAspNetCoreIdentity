@@ -12,7 +12,8 @@
                 </AuthorizeView>
                 @if (context.User.Claims.FirstOrDefault(c => c.Type == Constants.ClaimTypes.IsEmailConfirmed)?.Value == bool.FalseString)
                 {
-                    <span>Email Not Confirmed. <button @onclick="SendConfirmationEmailAsync">Send confirmation email now</button></span>
+                    <span>Email Not Confirmed. <button
+                            @onclick="SendConfirmationEmailAsync">Send confirmation email now</button></span>
                 }
                 <a href="@Constants.Route.AllNotes">My Notes</a>
                 <button @onclick="LogoutAsync">Logout</button>
@@ -39,13 +40,8 @@
     private async Task LogoutAsync()
     {
         var result = await AccountManagement.CookieLogoutAsync();
-        if (!result.Succeeded)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.ErrorList));
-            return;
-        }
-
-        NavigationManager.NavigateTo(Constants.Route.Home);
+        if (result.Succeeded) NavigationManager.NavigateTo(Constants.Route.Home);
+        else await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 
     private async Task SendConfirmationEmailAsync()
@@ -54,11 +50,7 @@
         var user = authState.User;
         var result = await AccountManagement.SendConfirmationEmailAsync(
             user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? string.Empty);
-        if (!result.Succeeded)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.ErrorList));
-            return;
-        }
-        await JSRuntime.InvokeVoidAsync("alert", "Confirmation email sent. Please check your inbox.");
+        if (result.Succeeded) await JSRuntime.InvokeVoidAsync("alert", "Confirmation email sent. Please check your inbox.");
+        else await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 }
