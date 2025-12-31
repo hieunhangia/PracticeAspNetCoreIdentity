@@ -24,7 +24,7 @@ public class RequireConfirmedEmailAttribute : ActionFilterAttribute
             context.Result = new ObjectResult(new ProblemDetails
             {
                 Title = "Email not confirmed",
-                Detail = "You must confirm your email to access this resource.",
+                Detail = "You must confirm your email to do this action.",
                 Status = StatusCodes.Status403Forbidden
             })
             {
