@@ -32,7 +32,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager) : 
             {
                 Id = user.Id,
                 Email = user.Email
-            }).ToListAsync(), await users.CountAsync(), page, pageSize, orderBy));
+            }).ToListAsync(), page, pageSize, orderBy, await users.CountAsync()));
     }
 
     [HttpGet("{id:guid}")]

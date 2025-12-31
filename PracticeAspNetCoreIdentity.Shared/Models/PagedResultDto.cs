@@ -1,6 +1,6 @@
 namespace PracticeAspNetCoreIdentity.Shared.Models;
 
-public class PagedResultDto<T>(List<T> items, int totalCount, int pageIndex, int pageSize, string orderBy)
+public class PagedResultDto<T>(List<T> items, int pageIndex, int pageSize, string orderBy, int totalCount)
 {
     public List<T> Items { get; } = items;
     public int PageIndex { get; } = pageIndex;
