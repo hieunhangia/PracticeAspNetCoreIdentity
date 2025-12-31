@@ -29,6 +29,9 @@ public class WebApiHttpClient(HttpClient client)
         => await ApiResult.CreateAsync(await client.PostAsJsonAsync("reset-password",
             new { email, resetCode, newPassword }));
 
+    public async Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword)
+        => await ApiResult.CreateAsync(await client.PostAsJsonAsync("manage/info", new { oldPassword, newPassword }));
+
     public async Task<ApiResult<UserInfoDto>> GetUserInfoAsync()
         => await ApiResult.CreateAsync<UserInfoDto>(await client.GetAsync("manage/info"));
 
