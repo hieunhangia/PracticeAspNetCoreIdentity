@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using PracticeAspNetCoreIdentity.Shared.Constants;
+using PracticeAspNetCoreIdentity.Shared.Models;
 using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
 using PracticeAspNetCoreIdentity.Shared.Models.Identity;
 using PracticeAspNetCoreIdentity.Shared.Models.UserNote;
@@ -43,13 +44,10 @@ public class WebApiHttpClient(HttpClient client)
 
 
     // Admin Account Management
-    public async Task<ApiResult<IEnumerable<AccountSummaryDto>>> GetAllAccountsAsync(int page = 1, int pageSize = 10,
+    public async Task<ApiResult<PagedResultDto<AccountSummaryDto>>> GetAllAccountsAsync(int page = 1, int pageSize = 10,
         string orderBy = AccountOrderBy.EmailAsc)
-        => await ApiResult.CreateAsync<IEnumerable<AccountSummaryDto>>(
+        => await ApiResult.CreateAsync<PagedResultDto<AccountSummaryDto>>(
             await client.GetAsync($"accounts?page={page}&pageSize={pageSize}&orderBy={orderBy}"));
-
-    public async Task<ApiResult<int>> GetAccountCountAsync()
-        => await ApiResult.CreateAsync<int>(await client.GetAsync("accounts/count"));
 
     public async Task<ApiResult<AccountDetailDto>> GetAccountByIdAsync(Guid id)
         => await ApiResult.CreateAsync<AccountDetailDto>(await client.GetAsync($"accounts/{id}"));

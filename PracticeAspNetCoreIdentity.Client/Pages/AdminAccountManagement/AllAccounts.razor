@@ -1,93 +1,89 @@
 @using Microsoft.AspNetCore.Authorization
 @using PracticeAspNetCoreIdentity.Client.AdminAccountManagement
+@using PracticeAspNetCoreIdentity.Shared.Models
 @using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement
 @attribute [Route(Constants.Route.AdminAllAccounts)]
 @attribute [Authorize(Roles = UserRole.Administrator)]
 
 <h3>All Accounts</h3>
 
-<select @bind="OrderBy" @bind:after="ProcessOrderByChange">
+<select @onchange="ProcessOrderByChange">
     <option value="@AccountOrderBy.EmailAsc">Email Ascending</option>
     <option value="@AccountOrderBy.EmailDesc">Email Descending</option>
 </select>
 
-<table>
-    <tr>
-        <th>Email</th>
-        <th>Action</th>
-    </tr>
-    @foreach (var account in Accounts)
-    {
+@if (PagedResult == null)
+{
+    <p>Loading Accounts...</p>
+}
+else if (PagedResult.Items.Count == 0)
+{
+    <p>No Accounts Found.</p>
+}
+else
+{
+    <table>
         <tr>
-            <td>@account.Email</td>
-            <td>
-                <a href="@Constants.Route.AdminAccountDetail/@account.Id">Details</a>
-            </td>
+            <th>Email</th>
+            <th>Action</th>
         </tr>
+        @foreach (var account in PagedResult.Items)
+        {
+            <tr>
+                <td>@account.Email</td>
+                <td>
+                    <a href="@Constants.Route.AdminAccountDetail/@account.Id">Details</a>
+                </td>
+            </tr>
+        }
+    </table>
+
+
+    @if (PagedResult.HasPreviousPage)
+    {
+        <button @onclick="PreviousPage">Previous</button>
     }
-</table>
-<p>Total Account: @TotalAccounts</p>
 
-@if (Page > 1)
-{
-    <button @onclick="PreviousPage">Previous</button>
-}
-<span>@Page/@((int)Math.Ceiling((double)TotalAccounts / PageSize))</span>
+    <span>@PagedResult.PageIndex/@PagedResult.TotalPages</span>
 
-@if ((Page * PageSize) < TotalAccounts)
-{
-    <button @onclick="NextPage">Next</button>
+    @if (PagedResult.HasNextPage)
+    {
+        <button @onclick="NextPage">Next</button>
+    }
+
+    <p>Total @PagedResult.TotalCount accounts</p>
 }
+
 
 @inject IAdminAccountManagement AdminAccountManagement
 @inject IJSRuntime JsRuntime
 
 @code {
-    private IEnumerable<AccountSummaryDto> Accounts { get; set; } = [];
-    private int TotalAccounts { get; set; }
+    private PagedResultDto<AccountSummaryDto>? PagedResult { get; set; }
 
-    private int Page { get; set; } = 1;
-    private static int PageSize => 10;
-    private string OrderBy { get; set; } = AccountOrderBy.EmailAsc;
+    private const int InitialPage = 1;
+    private const int InitialPageSize = 10;
+    private const string InitialOrderBy = AccountOrderBy.EmailAsc;
 
-    protected override async Task OnInitializedAsync()
-    {
-        var result = await AdminAccountManagement.GetAccountCountAsync();
-        if (result.Succeeded) TotalAccounts = result.Data;
-        else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
+    protected override async Task OnInitializedAsync() => await LoadAccounts(InitialPage, InitialPageSize, InitialOrderBy);
 
-        await LoadAccounts();
-    }
-
-    private async Task ProcessOrderByChange()
-    {
-        Page = 1;
-        await LoadAccounts();
-    }
+    private async Task ProcessOrderByChange(ChangeEventArgs e) =>
+        await LoadAccounts(1, InitialPageSize, e.Value?.ToString() ?? InitialOrderBy);
 
     private async Task NextPage()
     {
-        if (Page * PageSize < TotalAccounts)
-        {
-            Page++;
-            await LoadAccounts();
-        }
+        if (PagedResult != null) await LoadAccounts(PagedResult.PageIndex + 1, PagedResult.PageSize, PagedResult.OrderBy);
     }
 
     private async Task PreviousPage()
     {
-        if (Page > 1)
-        {
-            Page--;
-            await LoadAccounts();
-        }
+        if (PagedResult != null) await LoadAccounts(PagedResult.PageIndex - 1, PagedResult.PageSize, PagedResult.OrderBy);
     }
 
-    private async Task LoadAccounts()
+    private async Task LoadAccounts(int page, int pageSize, string orderBy)
     {
-        var result = await AdminAccountManagement.GetAllAccountsAsync(Page, PageSize, OrderBy);
-
-        if (result.Succeeded) Accounts = result.Data!;
+        var result = await AdminAccountManagement.GetAllAccountsAsync(page, pageSize, orderBy);
+        if (result.Succeeded) PagedResult = result.Data;
         else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
 

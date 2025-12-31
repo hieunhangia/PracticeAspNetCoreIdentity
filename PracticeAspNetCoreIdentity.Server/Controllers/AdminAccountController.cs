@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
+using PracticeAspNetCoreIdentity.Shared.Models;
 using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
 
 namespace PracticeAspNetCoreIdentity.Server.Controllers;
@@ -22,23 +23,17 @@ public class AccountManagementController(UserManager<CustomUser> userManager) : 
         var users = userManager.Users.AsNoTracking();
         users = orderBy switch
         {
-            AccountOrderBy.EmailAsc => users.OrderBy(u => u.Email),
             AccountOrderBy.EmailDesc => users.OrderByDescending(u => u.Email),
             _ => users.OrderBy(u => u.Email)
         };
-        return Ok(await users
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        return Ok(new PagedResultDto<AccountSummaryDto>(await users
+            .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(user => new AccountSummaryDto
             {
                 Id = user.Id,
                 Email = user.Email
-            })
-            .ToListAsync());
+            }).ToListAsync(), await users.CountAsync(), page, pageSize, orderBy));
     }
-
-    [HttpGet("count")]
-    public async Task<IActionResult> GetAccountCountAsync() => Ok(await userManager.Users.CountAsync());
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetAccountByIdAsync(Guid id)
