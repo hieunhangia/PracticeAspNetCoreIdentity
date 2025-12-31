@@ -29,7 +29,11 @@
 @inject IJSRuntime JSRuntime
 
 @code {
-    private readonly CreateUpdateUserNoteRequest NewNote = new();
+    private readonly CreateUpdateUserNoteRequest NewNote = new()
+    {
+        Content = string.Empty,
+        Name = string.Empty
+    };
 
     private async Task AddNoteAsync()
     {

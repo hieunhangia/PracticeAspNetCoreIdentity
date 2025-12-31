@@ -34,7 +34,11 @@
 @code {
     [Parameter] public Guid NoteId { get; set; }
 
-    private readonly CreateUpdateUserNoteRequest UpdatingNote = new();
+    private readonly CreateUpdateUserNoteRequest UpdatingNote = new()
+    {
+        Content = string.Empty,
+        Name = string.Empty
+    };
 
     private bool IsLoadedNoteSuccessfully { get; set; }
 
@@ -44,8 +48,8 @@
         if (result.Succeeded)
         {
             var note = result.Data!;
-            UpdatingNote.Name = note.Name;
-            UpdatingNote.Content = note.Content;
+            UpdatingNote.Name = note.Name ?? string.Empty;
+            UpdatingNote.Content = note.Content ?? string.Empty;
             IsLoadedNoteSuccessfully = true;
         }
         else

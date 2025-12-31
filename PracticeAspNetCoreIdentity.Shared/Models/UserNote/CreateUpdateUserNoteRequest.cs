@@ -6,8 +6,8 @@ public class CreateUpdateUserNoteRequest
 {
     [Required]
     [MaxLength(100)]
-    public string? Name { get; set; }
+    public required string Name { get; set; }
     
     [Required]
-    public string? Content { get; set; }
+    public required string Content { get; set; }
 }
