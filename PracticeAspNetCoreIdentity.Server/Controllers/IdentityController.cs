@@ -70,10 +70,10 @@ public class IdentityController(
     public async Task<IActionResult> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies,
         [FromQuery] bool? useSessionCookies)
     {
-        var useCookieScheme = (useCookies == true) || (useSessionCookies == true);
-        var isPersistent = (useCookies == true) && (useSessionCookies != true);
-        signInManager.AuthenticationScheme =
-            useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
+        var isPersistent = useCookies == true && useSessionCookies != true;
+        signInManager.AuthenticationScheme = useCookies == true || useSessionCookies == true
+            ? IdentityConstants.ApplicationScheme
+            : IdentityConstants.BearerScheme;
 
         var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent,
             lockoutOnFailure: true);
@@ -99,10 +99,13 @@ public class IdentityController(
         return Ok();
     }
 
-    [HttpPost("cookie-google-login")]
+    [HttpPost("google-login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AccessTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CookieGoogleLogin([FromBody] GoogleLoginRequest request)
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request, [FromQuery] bool? useCookies,
+        [FromQuery] bool? useSessionCookies)
     {
         try
         {
@@ -161,7 +164,10 @@ public class IdentityController(
                 }
             }
 
-            await signInManager.SignInAsync(user, isPersistent: true);
+            signInManager.AuthenticationScheme = useCookies == true || useSessionCookies == true
+                ? IdentityConstants.ApplicationScheme
+                : IdentityConstants.BearerScheme;
+            await signInManager.SignInAsync(user, useCookies == true && useSessionCookies != true);
             return Ok();
         }
         catch (InvalidJwtException)
@@ -171,8 +177,11 @@ public class IdentityController(
         }
         catch
         {
-            return Problem("An error occurred during Google login.",
-                statusCode: StatusCodes.Status500InternalServerError);
+            return new ObjectResult(CreateValidationProblem("GoogleAuthenticationError",
+                "An error occurred while processing the Google authentication request."))
+            {
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
         }
     }
 
