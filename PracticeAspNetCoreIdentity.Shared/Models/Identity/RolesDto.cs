@@ -2,5 +2,5 @@ namespace PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 public class RolesDto
 {
-    public string[]? Roles { get; set; }
+    public List<string>? Roles { get; init; }
 }

@@ -434,7 +434,7 @@ public class IdentityController(
 
         return Ok(new RolesDto
         {
-            Roles = (await userManager.GetRolesAsync(userDb)).ToArray()
+            Roles = (await userManager.GetRolesAsync(userDb)).ToList()
         });
     }
 
