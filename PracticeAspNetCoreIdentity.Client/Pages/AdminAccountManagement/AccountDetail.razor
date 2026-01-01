@@ -6,6 +6,11 @@
 
 <h3>AccountDetail</h3>
 
+@if (Account == null)
+{
+    <p><em>Loading...</em></p>
+    return;
+}
 <div>
     <p>Id: @Account.Id</p>
     <p>Email: @Account.Email</p>
@@ -19,7 +24,7 @@
 @code {
     [Parameter] public Guid AccountId { get; set; }
 
-    private AccountDetailDto Account { get; set; } = new();
+    private AccountDetailDto? Account { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

@@ -2,7 +2,7 @@ namespace PracticeAspNetCoreIdentity.Shared.Models.UserNote;
 
 public class UserNoteDto
 {
-    public Guid Id { get; set; }
-    public string? Name { get; set; }
-    public string? Content { get; set; }
+    public required Guid Id { get; init; }
+    public required string Name { get; init; }
+    public required string Content { get; init; }
 }

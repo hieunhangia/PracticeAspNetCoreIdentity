@@ -2,6 +2,6 @@ namespace PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
 
 public class AccountSummaryDto
 {
-    public Guid Id { get; set; }
-    public string? Email { get; set; }
+    public required Guid Id { get; init; }
+    public required string Email { get; init; }
 }
