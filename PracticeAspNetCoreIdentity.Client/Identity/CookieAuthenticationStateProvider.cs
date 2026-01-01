@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
+using PracticeAspNetCoreIdentity.Shared.Constants;
 using PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 namespace PracticeAspNetCoreIdentity.Client.Identity;
@@ -17,7 +18,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         {
             new(ClaimTypes.Name, userInfoResult.Data.Email),
             new(ClaimTypes.Email, userInfoResult.Data.Email),
-            new(Constants.ClaimTypes.IsEmailConfirmed, userInfoResult.Data.IsEmailConfirmed.ToString()),
+            new(CustomClaimTypes.IsEmailConfirmed, userInfoResult.Data.IsEmailConfirmed.ToString()),
         };
 
         var rolesResult = await webApiHttpClient.GetUserRolesAsync();
