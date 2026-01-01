@@ -15,8 +15,8 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.Name, userInfoResult.Data.Email ?? string.Empty),
-            new(ClaimTypes.Email, userInfoResult.Data.Email ?? string.Empty),
+            new(ClaimTypes.Name, userInfoResult.Data.Email),
+            new(ClaimTypes.Email, userInfoResult.Data.Email),
             new(Constants.ClaimTypes.IsEmailConfirmed, userInfoResult.Data.IsEmailConfirmed.ToString()),
         };
 

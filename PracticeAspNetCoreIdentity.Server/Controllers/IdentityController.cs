@@ -384,7 +384,7 @@ public class IdentityController(
     {
         if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
 
-        return Ok(await CreateUserInfoDtoAsync(user, userManager));
+        return Ok(await CreateInfoResponseAsync(user, userManager));
     }
 
     [HttpPost("manage/info")]
@@ -420,7 +420,7 @@ public class IdentityController(
                 await SendConfirmationEmailAsync(user, infoRequest.NewEmail, isChange: true);
         }
 
-        return Ok(await CreateUserInfoDtoAsync(user, userManager));
+        return Ok(await CreateInfoResponseAsync(user, userManager));
     }
 
     [HttpGet("manage/roles")]
@@ -474,11 +474,12 @@ public class IdentityController(
                 .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray())
         };
 
-    private static async Task<UserInfoDto> CreateUserInfoDtoAsync(CustomUser user, UserManager<CustomUser> userManager)
+    private static async Task<InfoResponse> CreateInfoResponseAsync(CustomUser user,
+        UserManager<CustomUser> userManager)
         => new()
         {
             Email = await userManager.GetEmailAsync(user) ??
                     throw new NotSupportedException("Users must have an email."),
-            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
+            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user)
         };
 }

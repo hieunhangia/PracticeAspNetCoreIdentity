@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using PracticeAspNetCoreIdentity.Client.Identity;
 using PracticeAspNetCoreIdentity.Shared.Constants;
 using PracticeAspNetCoreIdentity.Shared.Models;
 using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
@@ -33,8 +34,8 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword)
         => await ApiResult.CreateAsync(await client.PostAsJsonAsync("manage/info", new { oldPassword, newPassword }));
 
-    public async Task<ApiResult<UserInfoDto>> GetUserInfoAsync()
-        => await ApiResult.CreateAsync<UserInfoDto>(await client.GetAsync("manage/info"));
+    public async Task<ApiResult<InfoResponse>> GetUserInfoAsync()
+        => await ApiResult.CreateAsync<InfoResponse>(await client.GetAsync("manage/info"));
 
     public async Task<ApiResult> CookieLogoutAsync()
         => await ApiResult.CreateAsync(await client.PostAsync("cookie-logout", null));
