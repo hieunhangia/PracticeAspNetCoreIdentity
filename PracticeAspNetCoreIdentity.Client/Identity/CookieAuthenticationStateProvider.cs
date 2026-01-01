@@ -21,16 +21,9 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
             new(CustomClaimTypes.IsEmailConfirmed, userInfoResult.Data.IsEmailConfirmed.ToString()),
         };
 
-        var rolesResult = await webApiHttpClient.GetUserRolesAsync();
-
-        if (!rolesResult.Succeeded)
-            return new AuthenticationState(
-                new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));
-
-        if (rolesResult.Data is { Roles: not null })
-            claims.AddRange(rolesResult.Data.Roles
-                .Where(role => !string.IsNullOrWhiteSpace(role))
-                .Select(role => new Claim(ClaimTypes.Role, role)));
+        claims.AddRange(userInfoResult.Data.Roles
+            .Where(role => !string.IsNullOrWhiteSpace(role))
+            .Select(role => new Claim(ClaimTypes.Role, role)));
 
         return new AuthenticationState(
             new ClaimsPrincipal(new ClaimsIdentity(claims, nameof(CookieAuthenticationStateProvider))));

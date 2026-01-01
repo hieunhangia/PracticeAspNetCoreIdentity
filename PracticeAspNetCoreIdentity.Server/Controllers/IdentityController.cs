@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
-using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
 using PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 namespace PracticeAspNetCoreIdentity.Server.Controllers;
@@ -378,19 +377,19 @@ public class IdentityController(
 
     [HttpGet("manage/info")]
     [Authorize]
-    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserInfoResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Info()
     {
         if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
 
-        return Ok(await CreateUserInfoResponseAsync(user, userManager));
+        return Ok(await CreateUserInfoResponseAsync(user));
     }
 
     [HttpPost("manage/info")]
     [Authorize]
-    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserInfoResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -421,22 +420,7 @@ public class IdentityController(
                 await SendConfirmationEmailAsync(user, infoRequest.NewEmail, isChange: true);
         }
 
-        return Ok(await CreateUserInfoResponseAsync(user, userManager));
-    }
-
-    [HttpGet("manage/roles")]
-    [Authorize]
-    [ProducesResponseType(typeof(RolesDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Roles()
-    {
-        var userDb = await userManager.GetUserAsync(User);
-        if (userDb == null) return Unauthorized();
-
-        return Ok(new RolesDto
-        {
-            Roles = (await userManager.GetRolesAsync(userDb)).ToList()
-        });
+        return Ok(await CreateUserInfoResponseAsync(user));
     }
 
     private async Task SendConfirmationEmailAsync(CustomUser user, string email, bool isChange = false)
@@ -475,12 +459,12 @@ public class IdentityController(
                 .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray())
         };
 
-    private static async Task<UserInfoResponse> CreateUserInfoResponseAsync(CustomUser user,
-        UserManager<CustomUser> userManager)
+    private async Task<UserInfoResponse> CreateUserInfoResponseAsync(CustomUser user)
         => new()
         {
             Email = await userManager.GetEmailAsync(user) ??
                     throw new NotSupportedException("Users must have an email."),
-            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user)
+            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
+            Roles = (await userManager.GetRolesAsync(user)).ToList()
         };
 }

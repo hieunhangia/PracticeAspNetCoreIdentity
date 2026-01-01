@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using Flurl;
-using PracticeAspNetCoreIdentity.Client.Identity;
 using PracticeAspNetCoreIdentity.Shared.Constants;
 using PracticeAspNetCoreIdentity.Shared.Models;
 using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
@@ -42,10 +41,6 @@ public class WebApiHttpClient(HttpClient client)
 
     public async Task<ApiResult> CookieLogoutAsync() =>
         await ApiResult.CreateAsync(await client.PostAsync("cookie-logout", null));
-
-    public async Task<ApiResult<RolesDto>> GetUserRolesAsync() =>
-        await ApiResult.CreateAsync<RolesDto>(await client.GetAsync("manage".AppendPathSegment("roles")));
-
 
     // Admin Account Management
     public async Task<ApiResult<PagedResultDto<AccountSummaryDto>>> GetAllAccountsAsync(int page = 1, int pageSize = 10,
