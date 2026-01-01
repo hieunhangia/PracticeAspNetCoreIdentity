@@ -1,6 +1,6 @@
-namespace PracticeAspNetCoreIdentity.Client.Identity;
+namespace PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
 
-public class InfoResponse
+public class UserInfoResponse
 {
     public required string Email { get; init; }
     public required bool IsEmailConfirmed { get; init; }

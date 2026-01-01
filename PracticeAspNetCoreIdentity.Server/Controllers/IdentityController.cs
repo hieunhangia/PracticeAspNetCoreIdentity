@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using PracticeAspNetCoreIdentity.Server.Models;
 using PracticeAspNetCoreIdentity.Shared.Constants;
+using PracticeAspNetCoreIdentity.Shared.Models.AccountManagement;
 using PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 namespace PracticeAspNetCoreIdentity.Server.Controllers;
@@ -384,7 +385,7 @@ public class IdentityController(
     {
         if (await userManager.GetUserAsync(User) is not { } user) return NotFound();
 
-        return Ok(await CreateInfoResponseAsync(user, userManager));
+        return Ok(await CreateUserInfoResponseAsync(user, userManager));
     }
 
     [HttpPost("manage/info")]
@@ -420,7 +421,7 @@ public class IdentityController(
                 await SendConfirmationEmailAsync(user, infoRequest.NewEmail, isChange: true);
         }
 
-        return Ok(await CreateInfoResponseAsync(user, userManager));
+        return Ok(await CreateUserInfoResponseAsync(user, userManager));
     }
 
     [HttpGet("manage/roles")]
@@ -474,7 +475,7 @@ public class IdentityController(
                 .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray())
         };
 
-    private static async Task<InfoResponse> CreateInfoResponseAsync(CustomUser user,
+    private static async Task<UserInfoResponse> CreateUserInfoResponseAsync(CustomUser user,
         UserManager<CustomUser> userManager)
         => new()
         {

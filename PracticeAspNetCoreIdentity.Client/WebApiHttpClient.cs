@@ -37,8 +37,8 @@ public class WebApiHttpClient(HttpClient client)
         await ApiResult.CreateAsync(await client.PostAsJsonAsync("manage".AppendPathSegment("info"),
             new { oldPassword, newPassword }));
 
-    public async Task<ApiResult<InfoResponse>> GetUserInfoAsync() =>
-        await ApiResult.CreateAsync<InfoResponse>(await client.GetAsync("manage".AppendPathSegment("info")));
+    public async Task<ApiResult<UserInfoResponse>> GetUserInfoAsync() =>
+        await ApiResult.CreateAsync<UserInfoResponse>(await client.GetAsync("manage".AppendPathSegment("info")));
 
     public async Task<ApiResult> CookieLogoutAsync() =>
         await ApiResult.CreateAsync(await client.PostAsync("cookie-logout", null));
