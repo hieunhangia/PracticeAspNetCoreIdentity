@@ -6,8 +6,6 @@ namespace PracticeAspNetCoreIdentity.Server;
 
 public static class SeedData
 {
-    private static readonly string[] roles = [UserRole.Administrator, UserRole.Manager, UserRole.User];
-
     private static IEnumerable<(string Email, string Password, bool LockoutEnabled, string[] Roles)>
         GetUsers()
     {
@@ -62,7 +60,7 @@ public static class SeedData
         var userManager = scopeService.GetRequiredService<UserManager<CustomUser>>();
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
-        foreach (var role in roles)
+        foreach (var role in UserRole.AllRoles)
         {
             if (await roleManager.RoleExistsAsync(role)) continue;
             var roleResult = await roleManager.CreateAsync(new IdentityRole<Guid>(role));
