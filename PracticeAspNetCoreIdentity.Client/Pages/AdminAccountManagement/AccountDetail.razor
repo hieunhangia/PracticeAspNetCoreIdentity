@@ -9,13 +9,14 @@
 @if (Account == null)
 {
     <p><em>Loading...</em></p>
-    return;
 }
-<div>
+else
+{
     <p>Id: @Account.Id</p>
     <p>Email: @Account.Email</p>
     <p>Email @(Account.EmailConfirmed ? "Confirmed" : "Not Confirmed")</p>
-</div>
+    <p>Roles: @string.Join(", ", Account.AssignedRoles)</p>
+}
 
 
 @inject IAdminAccountManagement AdminAccountManagement
@@ -28,7 +29,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await AdminAccountManagement.GetAccountByIdAsync(AccountId);
+        var result = await AdminAccountManagement.GetAccountDetailByIdAsync(AccountId);
         if (result.Succeeded) Account = result.Data!;
         else await JsRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }

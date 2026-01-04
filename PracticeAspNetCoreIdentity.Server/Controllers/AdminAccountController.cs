@@ -12,7 +12,7 @@ namespace PracticeAspNetCoreIdentity.Server.Controllers;
 [ApiController]
 [Route("accounts")]
 [Authorize(Roles = UserRole.Administrator)]
-public class AccountManagementController(UserManager<CustomUser> userManager) : ControllerBase
+public class AdminAccountController(UserManager<CustomUser> userManager) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllAccountsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10,
@@ -31,7 +31,7 @@ public class AccountManagementController(UserManager<CustomUser> userManager) : 
             .Select(user => new AccountSummaryDto
             {
                 Id = user.Id,
-                Email = user.Email
+                Email = user.Email ?? string.Empty
             }).ToListAsync(), page, pageSize, orderBy, await users.CountAsync()));
     }
 
@@ -43,8 +43,9 @@ public class AccountManagementController(UserManager<CustomUser> userManager) : 
             ? Ok(new AccountDetailDto
             {
                 Id = user.Id,
-                Email = user.Email,
-                EmailConfirmed = user.EmailConfirmed
+                Email = user.Email ?? string.Empty,
+                EmailConfirmed = user.EmailConfirmed,
+                AssignedRoles = (await userManager.GetRolesAsync(user)).ToList(),
             })
             : NotFound();
     }

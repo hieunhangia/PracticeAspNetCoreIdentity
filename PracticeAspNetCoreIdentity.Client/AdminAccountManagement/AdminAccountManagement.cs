@@ -9,5 +9,5 @@ public class AdminAccountManagement(WebApiHttpClient webApiHttpClient) : IAdminA
     public Task<ApiResult<PagedResultDto<AccountSummaryDto>>> GetAllAccountsAsync(int page = 1, int pageSize = 10,
         string orderBy = AccountOrderBy.EmailAsc) => webApiHttpClient.GetAllAccountsAsync(page, pageSize, orderBy);
 
-    public Task<ApiResult<AccountDetailDto>> GetAccountByIdAsync(Guid id) => webApiHttpClient.GetAccountByIdAsync(id);
+    public Task<ApiResult<AccountDetailDto>> GetAccountDetailByIdAsync(Guid id) => webApiHttpClient.GetAccountDetailByIdAsync(id);
 }

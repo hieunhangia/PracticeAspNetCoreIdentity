@@ -42,22 +42,15 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<ApiResult> CookieLogoutAsync() =>
         await ApiResult.CreateAsync(await client.PostAsync("cookie-logout", null));
 
+
     // Admin Account Management
     public async Task<ApiResult<PagedResultDto<AccountSummaryDto>>> GetAllAccountsAsync(int page = 1, int pageSize = 10,
         string orderBy = AccountOrderBy.EmailAsc) =>
         await ApiResult.CreateAsync<PagedResultDto<AccountSummaryDto>>(await client.GetAsync($"accounts"
             .SetQueryParam("page", page).SetQueryParam("pageSize", pageSize).SetQueryParam("orderBy", orderBy)));
 
-    public async Task<ApiResult<AccountDetailDto>> GetAccountByIdAsync(Guid id) =>
+    public async Task<ApiResult<AccountDetailDto>> GetAccountDetailByIdAsync(Guid id) =>
         await ApiResult.CreateAsync<AccountDetailDto>(await client.GetAsync($"accounts".AppendPathSegment(id)));
-
-    public async Task<ApiResult> AddRolesToAccountAsync(Guid id, AddRolesRequest request) =>
-        await ApiResult.CreateAsync(
-            await client.PostAsJsonAsync($"accounts".AppendPathSegment(id).AppendPathSegment("roles"), request));
-
-    public async Task<ApiResult> RemoveRolesFromAccountAsync(Guid id, IEnumerable<string> roles) =>
-        await ApiResult.CreateAsync(await client.DeleteAsync($"accounts".AppendPathSegment(id)
-            .AppendPathSegment("roles").SetQueryParam("roles", roles)));
 
 
     // User Notes Management

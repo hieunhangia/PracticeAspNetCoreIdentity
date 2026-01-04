@@ -9,5 +9,5 @@ public interface IAdminAccountManagement
     Task<ApiResult<PagedResultDto<AccountSummaryDto>>> GetAllAccountsAsync(int page = 1, int pageSize = 10,
         string orderBy = AccountOrderBy.EmailAsc);
 
-    Task<ApiResult<AccountDetailDto>> GetAccountByIdAsync(Guid id);
+    Task<ApiResult<AccountDetailDto>> GetAccountDetailByIdAsync(Guid id);
 }
