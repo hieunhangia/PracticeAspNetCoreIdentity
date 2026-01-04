@@ -18,7 +18,7 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         {
             new(ClaimTypes.Name, userInfoResult.Data.Email),
             new(ClaimTypes.Email, userInfoResult.Data.Email),
-            new(CustomClaimTypes.IsEmailConfirmed, userInfoResult.Data.IsEmailConfirmed.ToString()),
+            new(CustomClaimTypes.EmailConfirmed, userInfoResult.Data.EmailConfirmed.ToString()),
         };
 
         claims.AddRange(userInfoResult.Data.Roles

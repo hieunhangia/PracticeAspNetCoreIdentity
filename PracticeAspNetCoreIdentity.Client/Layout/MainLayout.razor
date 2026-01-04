@@ -10,7 +10,7 @@
                 <AuthorizeView Roles="@UserRole.Administrator" Context="_">
                     <a href="@Constants.Route.AdminAllAccounts">Manage Accounts</a>
                 </AuthorizeView>
-                @if (context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.IsEmailConfirmed)?.Value == bool.FalseString)
+                @if (context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.EmailConfirmed)?.Value == bool.FalseString)
                 {
                     <span>Email Not Confirmed. <button
                             @onclick="SendConfirmationEmailAsync">Send confirmation email now</button></span>

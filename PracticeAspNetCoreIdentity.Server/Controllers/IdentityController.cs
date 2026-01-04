@@ -464,7 +464,7 @@ public class IdentityController(
         {
             Email = await userManager.GetEmailAsync(user) ??
                     throw new NotSupportedException("Users must have an email."),
-            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
+            EmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
             Roles = (await userManager.GetRolesAsync(user)).ToList()
         };
 }
