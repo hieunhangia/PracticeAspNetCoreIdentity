@@ -460,11 +460,18 @@ public class IdentityController(
         };
 
     private async Task<UserInfoResponse> CreateUserInfoResponseAsync(CustomUser user)
-        => new()
+    {
+        var emailTask = userManager.GetEmailAsync(user);
+        var emailConfirmedTask = userManager.IsEmailConfirmedAsync(user);
+        var hasPasswordTask = userManager.HasPasswordAsync(user);
+        var rolesTask = userManager.GetRolesAsync(user);
+        await Task.WhenAll(emailTask, emailConfirmedTask, hasPasswordTask, rolesTask);
+        return new UserInfoResponse
         {
-            Email = await userManager.GetEmailAsync(user) ??
-                    throw new NotSupportedException("Users must have an email."),
-            EmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
-            Roles = (await userManager.GetRolesAsync(user)).ToList()
+            Email = await emailTask ?? throw new NotSupportedException("Users must have an email."),
+            EmailConfirmed = await emailConfirmedTask,
+            HasPassword = await hasPasswordTask,
+            Roles = (await rolesTask).ToList()
         };
+    }
 }
