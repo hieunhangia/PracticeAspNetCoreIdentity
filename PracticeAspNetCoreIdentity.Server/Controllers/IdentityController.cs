@@ -403,13 +403,23 @@ public class IdentityController(
 
         if (!string.IsNullOrEmpty(infoRequest.NewPassword))
         {
-            if (string.IsNullOrEmpty(infoRequest.OldPassword))
-                return BadRequest(CreateValidationProblem("OldPasswordRequired",
-                    "The old password is required to set a new password. If the old password is forgotten, use /resetPassword."));
+            if (await userManager.HasPasswordAsync(user))
+            {
+                if (string.IsNullOrEmpty(infoRequest.OldPassword))
+                {
+                    return BadRequest(CreateValidationProblem("OldPasswordRequired",
+                        "The old password is required to set a new password. If the old password is forgotten, use /resetPassword."));
+                }
 
-            var changePasswordResult =
-                await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
-            if (!changePasswordResult.Succeeded) return BadRequest(CreateValidationProblem(changePasswordResult));
+                var changePasswordResult =
+                    await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
+                if (!changePasswordResult.Succeeded) return BadRequest(CreateValidationProblem(changePasswordResult));
+            }
+            else
+            {
+                var addPasswordResult = await userManager.AddPasswordAsync(user, infoRequest.NewPassword);
+                if (!addPasswordResult.Succeeded) return BadRequest(CreateValidationProblem(addPasswordResult));
+            }
         }
 
         if (!string.IsNullOrEmpty(infoRequest.NewEmail))

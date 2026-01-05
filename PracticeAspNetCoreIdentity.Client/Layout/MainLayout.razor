@@ -15,9 +15,13 @@
                     <span>Email Not Confirmed. <button
                             @onclick="SendConfirmationEmailAsync">Send confirmation email now</button></span>
                 }
-                @if (context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.HasPassword)?.Value == bool.FalseString)
+                @if (context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.HasPassword)?.Value == bool.TrueString)
                 {
                     <a href="@Constants.Route.ChangePassword">Change Password</a>
+                }
+                else
+                {
+                    <a href="@Constants.Route.SetPassword">Set Password to use password login</a>
                 }
                 <a href="@Constants.Route.AllNotes">My Notes</a>
                 <button @onclick="LogoutAsync">Logout</button>

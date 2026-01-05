@@ -35,6 +35,10 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword) =>
         await ApiResult.CreateAsync(await client.PostAsJsonAsync("manage".AppendPathSegment("info"),
             new { oldPassword, newPassword }));
+    
+    public async Task<ApiResult> SetPasswordAsync(string newPassword) =>
+        await ApiResult.CreateAsync(await client.PostAsJsonAsync("manage".AppendPathSegment("info"),
+            new { newPassword }));
 
     public async Task<ApiResult<UserInfoResponse>> GetUserInfoAsync() =>
         await ApiResult.CreateAsync<UserInfoResponse>(await client.GetAsync("manage".AppendPathSegment("info")));

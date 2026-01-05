@@ -10,4 +10,5 @@ public interface IAccountManagement
     Task<ApiResult> ForgotPasswordAsync(string email);
     Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword);
     Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword);
+    Task<ApiResult> SetPasswordAsync(string newPassword);
 }

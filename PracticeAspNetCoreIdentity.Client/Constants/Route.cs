@@ -9,6 +9,7 @@ public static class Route
     public const string ForgotPassword = "/forgot-password";
     public const string EmailConfirmation = "/email-confirmation";
     
+    public const string SetPassword = "/set-password";
     public const string ChangePassword = "/change-password";
 
     public const string AdminAllAccounts = "/admin/all-accounts";
