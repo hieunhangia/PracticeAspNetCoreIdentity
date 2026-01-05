@@ -44,8 +44,8 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         return result;
     }
 
-    public async Task<ApiResult> RegisterAsync(string email, string password) =>
-        await webApiHttpClient.RegisterAsync(email, password);
+    public Task<ApiResult> RegisterAsync(string email, string password) =>
+        webApiHttpClient.RegisterAsync(email, password);
 
     public async Task<ApiResult> CookieLogoutAsync()
     {
@@ -54,13 +54,13 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
         return result;
     }
 
-    public async Task<ApiResult> SendConfirmationEmailAsync(string email) =>
-        await webApiHttpClient.SendConfirmationEmailAsync(email);
+    public Task<ApiResult> SendConfirmationEmailAsync(string email) =>
+        webApiHttpClient.SendConfirmationEmailAsync(email);
 
-    public async Task<ApiResult> ForgotPasswordAsync(string email) => await webApiHttpClient.ForgotPasswordAsync(email);
+    public Task<ApiResult> ForgotPasswordAsync(string email) => webApiHttpClient.ForgotPasswordAsync(email);
 
-    public async Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword) =>
-        await webApiHttpClient.ResetPasswordAsync(email, resetCode, newPassword);
+    public Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword) =>
+        webApiHttpClient.ResetPasswordAsync(email, resetCode, newPassword);
 
     public Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword) =>
         webApiHttpClient.ChangePasswordAsync(oldPassword, newPassword);
