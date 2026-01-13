@@ -68,7 +68,8 @@ public class IdentityController(
         signInManager.AuthenticationScheme =
             useCookies == true ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
-        var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, useCookies == true, lockoutOnFailure: true);
+        var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, useCookies == true,
+            lockoutOnFailure: true);
 
         if (result.IsLockedOut)
         {
@@ -86,8 +87,7 @@ public class IdentityController(
     }
 
     [HttpPost("google-login")]
-    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request, [FromQuery] bool? useCookies,
-        [FromQuery] bool? useSessionCookies)
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request, [FromQuery] bool? useCookies)
     {
         try
         {
@@ -103,6 +103,8 @@ public class IdentityController(
             var user = await userManager.FindByLoginAsync(Identity.Constants.LoginProvider.Google, payload.Subject);
             if (user == null)
             {
+                await using var transaction = await dbContext.Database.BeginTransactionAsync();
+
                 user = await userManager.FindByEmailAsync(payload.Email);
                 if (user == null)
                 {
@@ -112,8 +114,6 @@ public class IdentityController(
                         Email = payload.Email,
                         EmailConfirmed = true
                     };
-
-                    await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
                     var result = await userManager.CreateAsync(user);
                     if (!result.Succeeded)
@@ -134,8 +134,6 @@ public class IdentityController(
                     {
                         return BadRequest(CreateValidationProblem(result));
                     }
-
-                    await transaction.CommitAsync();
                 }
                 else
                 {
@@ -157,13 +155,15 @@ public class IdentityController(
                         }
                     }
                 }
+
+                await transaction.CommitAsync();
             }
 
-            signInManager.AuthenticationScheme = useCookies == true || useSessionCookies == true
+            signInManager.AuthenticationScheme = useCookies == true
                 ? IdentityConstants.ApplicationScheme
                 : IdentityConstants.BearerScheme;
-            await signInManager.SignInAsync(user, useCookies == true && useSessionCookies != true);
-            return Ok();
+            await signInManager.SignInAsync(user, useCookies == true);
+            return Empty;
         }
         catch (InvalidJwtException)
         {
