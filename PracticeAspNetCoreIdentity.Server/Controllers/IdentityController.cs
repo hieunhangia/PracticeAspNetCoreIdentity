@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using Google.Apis.Auth;
@@ -26,20 +25,11 @@ public class IdentityController(
     TimeProvider timeProvider
 ) : ControllerBase
 {
-    private static readonly EmailAddressAttribute _emailAddressAttribute = new();
-
     private const string ConfirmEmailRouteName = "ConfirmEmailRoute";
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registration)
     {
-        if (string.IsNullOrEmpty(registration.Email) || !_emailAddressAttribute.IsValid(registration.Email))
-        {
-            return BadRequest(
-                CreateValidationProblem(
-                    IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(registration.Email))));
-        }
-
         var user = new CustomUser
         {
             UserName = registration.Email,
@@ -51,6 +41,14 @@ public class IdentityController(
         var result = await userManager.CreateAsync(user, registration.Password);
         if (!result.Succeeded)
         {
+            if (result.Errors.All(e => e.Code != "DuplicateEmail"))
+            {
+                return BadRequest(CreateValidationProblem(result));
+            }
+
+            var errors = result.Errors.ToList();
+            errors.RemoveAll(e => e.Code == "DuplicateUserName");
+            result = IdentityResult.Failed(errors.ToArray());
             return BadRequest(CreateValidationProblem(result));
         }
 
@@ -61,7 +59,7 @@ public class IdentityController(
         }
 
         await transaction.CommitAsync();
-        return Ok();
+        return Created(string.Empty, new { user.Id, user.Email });
     }
 
     [HttpPost("login")]
