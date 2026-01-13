@@ -21,7 +21,6 @@ public class IdentityController(
     IConfiguration configuration,
     UserManager<CustomUser> userManager,
     SignInManager<CustomUser> signInManager,
-    IUserStore<CustomUser> userStore,
     IEmailSender<CustomUser> emailSender,
     IOptionsMonitor<BearerTokenOptions> bearerTokenOptions,
     TimeProvider timeProvider
@@ -34,22 +33,16 @@ public class IdentityController(
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registration)
     {
-        if (!userManager.SupportsUserEmail)
+        if (string.IsNullOrEmpty(registration.Email) || !_emailAddressAttribute.IsValid(registration.Email))
         {
-            throw new NotSupportedException($"{nameof(IdentityController)} requires a user store with email support.");
+            return BadRequest(CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(registration.Email))));
         }
 
-        var emailStore = (IUserEmailStore<CustomUser>)userStore;
-        var email = registration.Email;
-
-        if (string.IsNullOrEmpty(email) || !_emailAddressAttribute.IsValid(email))
+        var user = new CustomUser
         {
-            return BadRequest(CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(email))));
-        }
-
-        var user = new CustomUser();
-        await userStore.SetUserNameAsync(user, email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, email, CancellationToken.None);
+            UserName = registration.Email,
+            Email = registration.Email
+        };
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
@@ -114,16 +107,12 @@ public class IdentityController(
                 user = await userManager.FindByEmailAsync(payload.Email);
                 if (user == null)
                 {
-                    var emailStore = (IUserEmailStore<CustomUser>)userStore;
                     user = new CustomUser
                     {
                         UserName = payload.Email,
                         Email = payload.Email,
                         EmailConfirmed = true
                     };
-
-                    await userStore.SetUserNameAsync(user, payload.Email, CancellationToken.None);
-                    await emailStore.SetEmailAsync(user, payload.Email, CancellationToken.None);
 
                     await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
