@@ -200,11 +200,16 @@ public class IdentityController(
             return BadRequest(CreateValidationProblem("EmailAlreadyConfirmed", "The email is already confirmed."));
         }
 
-        var clientUrl = configuration["ClientUrl"] ?? throw new InvalidOperationException("ClientUrl is not configured.");
-        var confirmEmailPath = configuration["ConfirmEmailPath"] ?? throw new InvalidOperationException("ConfirmEmailPath is not configured.");
+        var clientUrl = configuration["ClientUrl"] ??
+                        throw new InvalidOperationException("ClientUrl is not configured.");
+        var confirmEmailPath = configuration["ConfirmEmailPath"] ??
+                               throw new InvalidOperationException("ConfirmEmailPath is not configured.");
+
         var code = WebEncoders.Base64UrlEncode(
             Encoding.UTF8.GetBytes(await userManager.GenerateEmailConfirmationTokenAsync(user)));
-        var confirmEmailUrl = $"{clientUrl.TrimEnd('/')}/{confirmEmailPath.TrimStart('/')}?userId={user.Id}&code={code}";
+
+        var confirmEmailUrl =
+            $"{clientUrl.TrimEnd('/')}/{confirmEmailPath.TrimStart('/')}?email={user.Email}&code={code}";
 
         await emailSender.SendConfirmationLinkAsync(user, user.Email!, HtmlEncoder.Default.Encode(confirmEmailUrl));
 
@@ -214,7 +219,7 @@ public class IdentityController(
     [HttpPost("confirm-email")]
     public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest confirmEmailRequest)
     {
-        if (await userManager.FindByIdAsync(confirmEmailRequest.UserId) is not { } user)
+        if (await userManager.FindByEmailAsync(confirmEmailRequest.Email) is not { } user || user.EmailConfirmed)
         {
             return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
                 "Confirmation email failed. Please try again."));
@@ -237,7 +242,6 @@ public class IdentityController(
             return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
                 "Confirmation email failed. Please try again."));
         }
-
     }
 
     [HttpPost("forgot-password")]

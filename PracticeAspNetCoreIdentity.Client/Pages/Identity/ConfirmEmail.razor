@@ -18,7 +18,7 @@
 
 @code {
 
-    [SupplyParameterFromQuery] public string? UserId { get; set; }
+    [SupplyParameterFromQuery] public string? Email { get; set; }
 
     [SupplyParameterFromQuery] public string? Code { get; set; }
 
@@ -26,13 +26,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(Code))
+        if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Code))
         {
             success = false;
             return;
         }
 
-        var result = await AccountManagement.ConfirmEmailAsync(UserId, Code);
+        var result = await AccountManagement.ConfirmEmailAsync(Email, Code);
         success = result.Succeeded;
     }
 

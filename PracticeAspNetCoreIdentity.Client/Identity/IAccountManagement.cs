@@ -7,7 +7,7 @@ public interface IAccountManagement
     Task<ApiResult> RegisterAsync(string email, string password);
     Task<ApiResult> CookieLogoutAsync();
     Task<ApiResult> SendConfirmationEmailAsync();
-    Task<ApiResult> ConfirmEmailAsync(string userId, string code);
+    Task<ApiResult> ConfirmEmailAsync(string email, string code);
     Task<ApiResult> ForgotPasswordAsync(string email);
     Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword);
     Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword);

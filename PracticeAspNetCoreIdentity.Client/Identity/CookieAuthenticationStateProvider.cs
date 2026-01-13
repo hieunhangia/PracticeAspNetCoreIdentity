@@ -56,8 +56,8 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
 
     public Task<ApiResult> SendConfirmationEmailAsync() => webApiHttpClient.SendConfirmationEmailAsync();
 
-    public Task<ApiResult> ConfirmEmailAsync(string userId, string code) =>
-        webApiHttpClient.ConfirmEmailAsync(new ConfirmEmailRequest { UserId = userId, Code = code });
+    public Task<ApiResult> ConfirmEmailAsync(string email, string code) =>
+        webApiHttpClient.ConfirmEmailAsync(new ConfirmEmailRequest { Email = email, Code = code });
 
     public Task<ApiResult> ForgotPasswordAsync(string email) => webApiHttpClient.ForgotPasswordAsync(email);
 
