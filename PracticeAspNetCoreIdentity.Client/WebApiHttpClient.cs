@@ -22,8 +22,11 @@ public class WebApiHttpClient(HttpClient client)
     public async Task<ApiResult> RegisterAsync(string email, string password) =>
         await ApiResult.CreateAsync(await client.PostAsJsonAsync("register", new { email, password }));
 
-    public async Task<ApiResult> SendConfirmationEmailAsync(string email)
-        => await ApiResult.CreateAsync(await client.PostAsJsonAsync("send-confirmation-email", new { email }));
+    public async Task<ApiResult> SendConfirmationEmailAsync() =>
+        await ApiResult.CreateAsync(await client.PostAsync("send-confirmation-email", null));
+
+    public async Task<ApiResult> ConfirmEmailAsync(ConfirmEmailRequest request) =>
+        await ApiResult.CreateAsync(await client.PostAsJsonAsync("confirm-email", request));
 
     public async Task<ApiResult> ForgotPasswordAsync(string email) =>
         await ApiResult.CreateAsync(await client.PostAsJsonAsync("forgot-password", new { email }));
@@ -39,7 +42,7 @@ public class WebApiHttpClient(HttpClient client)
         await ApiResult.CreateAsync(await client.PostAsJsonAsync("change-password", request));
 
     public async Task<ApiResult<UserInfoResponse>> GetUserInfoAsync() =>
-        await ApiResult.CreateAsync<UserInfoResponse>(await client.GetAsync("manage".AppendPathSegment("info")));
+        await ApiResult.CreateAsync<UserInfoResponse>(await client.GetAsync("info"));
 
     public async Task<ApiResult> CookieLogoutAsync() =>
         await ApiResult.CreateAsync(await client.PostAsync("cookie-logout", null));

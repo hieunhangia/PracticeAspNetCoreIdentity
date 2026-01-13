@@ -25,8 +25,6 @@ public class IdentityController(
     TimeProvider timeProvider
 ) : ControllerBase
 {
-    private const string ConfirmEmailRouteName = "ConfirmEmailRoute";
-
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registration)
     {
@@ -192,63 +190,54 @@ public class IdentityController(
     [Authorize]
     public async Task<IActionResult> SendConfirmationEmail()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null)
+        if (await userManager.GetUserAsync(User) is not { } user)
         {
             return Unauthorized();
         }
 
-        var email = await userManager.GetEmailAsync(user);
-        if (string.IsNullOrEmpty(email))
-        {
-            throw new NotSupportedException("Users must have an email.");
-        }
-
-        if (await userManager.IsEmailConfirmedAsync(user))
+        if (user.EmailConfirmed)
         {
             return BadRequest(CreateValidationProblem("EmailAlreadyConfirmed", "The email is already confirmed."));
         }
 
-        var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        var clientUrl = configuration["ClientUrl"] ?? throw new InvalidOperationException("ClientUrl is not configured.");
+        var confirmEmailPath = configuration["ConfirmEmailPath"] ?? throw new InvalidOperationException("ConfirmEmailPath is not configured.");
+        var code = WebEncoders.Base64UrlEncode(
+            Encoding.UTF8.GetBytes(await userManager.GenerateEmailConfirmationTokenAsync(user)));
+        var confirmEmailUrl = $"{clientUrl.TrimEnd('/')}/{confirmEmailPath.TrimStart('/')}?userId={user.Id}&code={code}";
 
-        var userId = await userManager.GetUserIdAsync(user);
-        var routeValues = new RouteValueDictionary
-        {
-            ["userId"] = userId,
-            ["code"] = code,
-        };
-
-        var confirmEmailUrl = Url.Link(ConfirmEmailRouteName, routeValues) ??
-                              throw new NotSupportedException(
-                                  $"Could not find endpoint named '{ConfirmEmailRouteName}'.");
-        await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
+        await emailSender.SendConfirmationLinkAsync(user, user.Email!, HtmlEncoder.Default.Encode(confirmEmailUrl));
 
         return Ok();
     }
 
-    [HttpGet("confirm-email", Name = ConfirmEmailRouteName)]
-    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code)
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest confirmEmailRequest)
     {
-        var clientUrl = configuration["ClientUrl"];
-        if (await userManager.FindByIdAsync(userId) is not { } user)
+        if (await userManager.FindByIdAsync(confirmEmailRequest.UserId) is not { } user)
         {
-            return Redirect($"{clientUrl}/email-confirmation?success=false");
+            return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
+                "Confirmation email failed. Please try again."));
         }
 
         try
         {
-            code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(confirmEmailRequest.Code));
+            var result = await userManager.ConfirmEmailAsync(user, code);
+            if (!result.Succeeded)
+            {
+                return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
+                    "Confirmation email failed. Please try again."));
+            }
+
+            return Ok();
         }
         catch (FormatException)
         {
-            return Redirect($"{clientUrl}/email-confirmation?success=false");
+            return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
+                "Confirmation email failed. Please try again."));
         }
 
-        var result = await userManager.ConfirmEmailAsync(user, code);
-        return Redirect(!result.Succeeded
-            ? $"{clientUrl}/email-confirmation?success=false"
-            : $"{clientUrl}/email-confirmation?success=true");
     }
 
     [HttpPost("forgot-password")]

@@ -1,5 +1,4 @@
-﻿@using System.Security.Claims
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 
 <div class="page">
     <div class="top-row px-4">
@@ -54,10 +53,7 @@
 
     private async Task SendConfirmationEmailAsync()
     {
-        var authState = await AuthStateTask;
-        var user = authState.User;
-        var result = await AccountManagement.SendConfirmationEmailAsync(
-            user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? string.Empty);
+        var result = await AccountManagement.SendConfirmationEmailAsync();
         if (result.Succeeded) await JSRuntime.InvokeVoidAsync("alert", "Confirmation email sent. Please check your inbox.");
         else await JSRuntime.InvokeVoidAsync("alert", string.Join("\n", result.Errors?.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}") ?? []));
     }
