@@ -35,7 +35,9 @@ public class IdentityController(
     {
         if (string.IsNullOrEmpty(registration.Email) || !_emailAddressAttribute.IsValid(registration.Email))
         {
-            return BadRequest(CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(registration.Email))));
+            return BadRequest(
+                CreateValidationProblem(
+                    IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(registration.Email))));
         }
 
         var user = new CustomUser
@@ -71,7 +73,8 @@ public class IdentityController(
             ? IdentityConstants.ApplicationScheme
             : IdentityConstants.BearerScheme;
 
-        var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent, lockoutOnFailure: true);
+        var result =
+            await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent, lockoutOnFailure: true);
 
         if (result.IsLockedOut)
         {
@@ -94,11 +97,13 @@ public class IdentityController(
     {
         try
         {
-            var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings { Audience = [configuration["GoogleClientId"]] });
+            var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken,
+                new GoogleJsonWebSignature.ValidationSettings { Audience = [configuration["GoogleClientId"]] });
 
             if (!payload.EmailVerified)
             {
-                return BadRequest(CreateValidationProblem("UnverifiedEmail", "The email address is not verified by Google and cannot be used to log in."));
+                return BadRequest(CreateValidationProblem("UnverifiedEmail",
+                    "The email address is not verified by Google and cannot be used to log in."));
             }
 
             var user = await userManager.FindByLoginAsync(Identity.Constants.LoginProvider.Google, payload.Subject);
@@ -189,6 +194,25 @@ public class IdentityController(
         return SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
     }
 
+    [HttpPost("send-confirmation-email")]
+    [Authorize]
+    public async Task<IActionResult> SendConfirmationEmail()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var email = await userManager.GetEmailAsync(user);
+        if (!string.IsNullOrEmpty(email) && !await userManager.IsEmailConfirmedAsync(user))
+        {
+            await SendConfirmationEmailAsync(user, email);
+        }
+
+        return Ok();
+    }
+
     [HttpGet("confirm-email", Name = ConfirmEmailRouteName)]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code,
         [FromQuery] string? changedEmail)
@@ -229,18 +253,6 @@ public class IdentityController(
             : $"{clientUrl}/email-confirmation?success=true");
     }
 
-    [HttpPost("send-confirmation-email")]
-    public async Task<IActionResult> SendConfirmationEmail([FromBody] ResendConfirmationEmailRequest request)
-    {
-        var user = await userManager.FindByNameAsync(request.Email);
-        if (user != null && !await userManager.IsEmailConfirmedAsync(user))
-        {
-            await SendConfirmationEmailAsync(user, request.Email);
-        }
-
-        return Ok();
-    }
-
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
     {
@@ -250,7 +262,7 @@ public class IdentityController(
         {
             return Ok();
         }
-        
+
         var code = await userManager.GeneratePasswordResetTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
         await emailSender.SendPasswordResetCodeAsync(user, resetRequest.Email, HtmlEncoder.Default.Encode(code));
@@ -265,7 +277,8 @@ public class IdentityController(
 
         if (user == null || !await userManager.IsEmailConfirmedAsync(user))
         {
-            return BadRequest(CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken())));
+            return BadRequest(
+                CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken())));
         }
 
         IdentityResult result;
@@ -318,7 +331,9 @@ public class IdentityController(
 
         if (!string.IsNullOrEmpty(infoRequest.NewEmail) && !_emailAddressAttribute.IsValid(infoRequest.NewEmail))
         {
-            return BadRequest(CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(infoRequest.NewEmail))));
+            return BadRequest(
+                CreateValidationProblem(
+                    IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(infoRequest.NewEmail))));
         }
 
         if (!string.IsNullOrEmpty(infoRequest.NewPassword))
@@ -327,10 +342,12 @@ public class IdentityController(
             {
                 if (string.IsNullOrEmpty(infoRequest.OldPassword))
                 {
-                    return BadRequest(CreateValidationProblem("OldPasswordRequired", "The old password is required to set a new password. If the old password is forgotten, use /resetPassword."));
+                    return BadRequest(CreateValidationProblem("OldPasswordRequired",
+                        "The old password is required to set a new password. If the old password is forgotten, use /resetPassword."));
                 }
 
-                var changePasswordResult = await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
+                var changePasswordResult =
+                    await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
                 if (!changePasswordResult.Succeeded)
                 {
                     return BadRequest(CreateValidationProblem(changePasswordResult));
