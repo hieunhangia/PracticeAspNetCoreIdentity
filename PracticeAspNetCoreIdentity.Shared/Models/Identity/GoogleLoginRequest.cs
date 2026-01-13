@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PracticeAspNetCoreIdentity.Shared.Models.Identity;
 
 public class GoogleLoginRequest
 {
-    public required string IdToken { get; init; }
+    [Required] public required string IdToken { get; init; }
 }
