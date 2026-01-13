@@ -205,17 +205,36 @@ public class IdentityController(
         }
 
         var email = await userManager.GetEmailAsync(user);
-        if (!string.IsNullOrEmpty(email) && !await userManager.IsEmailConfirmedAsync(user))
+        if (string.IsNullOrEmpty(email))
         {
-            await SendConfirmationEmailAsync(user, email);
+            throw new NotSupportedException("Users must have an email.");
         }
+
+        if (await userManager.IsEmailConfirmedAsync(user))
+        {
+            return BadRequest(CreateValidationProblem("EmailAlreadyConfirmed", "The email is already confirmed."));
+        }
+
+        var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        var userId = await userManager.GetUserIdAsync(user);
+        var routeValues = new RouteValueDictionary
+        {
+            ["userId"] = userId,
+            ["code"] = code,
+        };
+
+        var confirmEmailUrl = Url.Link(ConfirmEmailRouteName, routeValues) ??
+                              throw new NotSupportedException(
+                                  $"Could not find endpoint named '{ConfirmEmailRouteName}'.");
+        await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
 
         return Ok();
     }
 
     [HttpGet("confirm-email", Name = ConfirmEmailRouteName)]
-    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code,
-        [FromQuery] string? changedEmail)
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string code)
     {
         var clientUrl = configuration["ClientUrl"];
         if (await userManager.FindByIdAsync(userId) is not { } user)
@@ -232,22 +251,7 @@ public class IdentityController(
             return Redirect($"{clientUrl}/email-confirmation?success=false");
         }
 
-        IdentityResult result;
-
-        if (string.IsNullOrEmpty(changedEmail))
-        {
-            result = await userManager.ConfirmEmailAsync(user, code);
-        }
-        else
-        {
-            result = await userManager.ChangeEmailAsync(user, changedEmail, code);
-
-            if (result.Succeeded)
-            {
-                result = await userManager.SetUserNameAsync(user, changedEmail);
-            }
-        }
-
+        var result = await userManager.ConfirmEmailAsync(user, code);
         return Redirect(!result.Succeeded
             ? $"{clientUrl}/email-confirmation?success=false"
             : $"{clientUrl}/email-confirmation?success=true");
@@ -363,41 +367,7 @@ public class IdentityController(
             }
         }
 
-        if (!string.IsNullOrEmpty(infoRequest.NewEmail))
-        {
-            var email = await userManager.GetEmailAsync(user);
-
-            if (email != infoRequest.NewEmail)
-                await SendConfirmationEmailAsync(user, infoRequest.NewEmail, isChange: true);
-        }
-
         return Ok(await CreateUserInfoResponseAsync(user));
-    }
-
-    private async Task SendConfirmationEmailAsync(CustomUser user, string email, bool isChange = false)
-    {
-        var code = isChange
-            ? await userManager.GenerateChangeEmailTokenAsync(user, email)
-            : await userManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-        var userId = await userManager.GetUserIdAsync(user);
-        var routeValues = new RouteValueDictionary
-        {
-            ["userId"] = userId,
-            ["code"] = code,
-        };
-
-        if (isChange)
-        {
-            // This is validated by the /confirmEmail endpoint on change.
-            routeValues.Add("changedEmail", email);
-        }
-
-        var confirmEmailUrl = Url.Link(ConfirmEmailRouteName, routeValues) ??
-                              throw new NotSupportedException(
-                                  $"Could not find endpoint named '{ConfirmEmailRouteName}'.");
-        await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
     }
 
     private static ValidationProblemDetails CreateValidationProblem(string errorCode, string errorDescription)
