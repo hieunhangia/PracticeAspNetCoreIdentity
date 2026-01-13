@@ -21,22 +21,23 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
              </html>
              """);
 
-    public Task SendPasswordResetLinkAsync(CustomUser user, string email, string resetLink)
-        => Task.CompletedTask; // Redundant method when using Identity Api
-
-    public Task SendPasswordResetCodeAsync(CustomUser user, string email, string resetCode)
-        => SendEmailAsync(email, "Reset your password",
+    public Task SendPasswordResetLinkAsync(CustomUser user, string email, string resetLink) =>
+        SendEmailAsync(email, "Reset your password",
             $"""
              <html lang="en">
              <head>
              </head>
              <body>
-                Please reset your password using the following code:<br>{resetCode}<br>
-                Code will expire in {TokenExpiredTime.PasswordResetCodeMinutes} minutes.<br>
+                Please reset your password using <a href='{resetLink}'>this link</a>.<br>
+                Link will expire in {TokenExpiredTime.PasswordResetCodeMinutes} minutes.<br>
                 If you didn't request this, you can safely ignore this email.
              </body>
              </html>
              """);
+
+    public Task SendPasswordResetCodeAsync(CustomUser user, string email, string resetCode) =>
+        Task.CompletedTask; // Not implemented
+
 
     private async Task SendEmailAsync(string toEmail, string subject, string message)
     {

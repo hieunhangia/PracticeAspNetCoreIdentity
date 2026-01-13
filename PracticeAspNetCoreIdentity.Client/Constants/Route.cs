@@ -6,9 +6,10 @@ public static class Route
     public const string Home = "/";
     public const string Login = "/login";
     public const string Register = "/register";
-    public const string ForgotPassword = "/forgot-password";
     public const string ConfirmEmail = "/confirm-email";
-    
+    public const string ForgotPassword = "/forgot-password";
+    public const string ResetPassword = "/reset-password";
+
     public const string SetPassword = "/set-password";
     public const string ChangePassword = "/change-password";
 

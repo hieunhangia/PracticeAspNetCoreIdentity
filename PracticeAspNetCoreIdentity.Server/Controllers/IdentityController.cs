@@ -249,14 +249,23 @@ public class IdentityController(
     {
         var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
-        if (user == null || !await userManager.IsEmailConfirmedAsync(user))
+        if (user is not { EmailConfirmed: true })
         {
             return Ok();
         }
 
-        var code = await userManager.GeneratePasswordResetTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        await emailSender.SendPasswordResetCodeAsync(user, resetRequest.Email, HtmlEncoder.Default.Encode(code));
+        var clientUrl = configuration["ClientUrl"] ??
+                        throw new InvalidOperationException("ClientUrl is not configured.");
+        var resetPasswordPath = configuration["ResetPasswordPath"] ??
+                                throw new InvalidOperationException("ResetPasswordPath is not configured.");
+
+        var code = WebEncoders.Base64UrlEncode(
+            Encoding.UTF8.GetBytes(await userManager.GeneratePasswordResetTokenAsync(user)));
+
+        var resetPasswordUrl =
+            $"{clientUrl.TrimEnd('/')}/{resetPasswordPath.TrimStart('/')}?email={user.Email}&code={code}";
+
+        await emailSender.SendPasswordResetLinkAsync(user, user.Email!, HtmlEncoder.Default.Encode(resetPasswordUrl));
 
         return Ok();
     }
@@ -266,29 +275,28 @@ public class IdentityController(
     {
         var user = await userManager.FindByEmailAsync(resetRequest.Email);
 
-        if (user == null || !await userManager.IsEmailConfirmedAsync(user))
+        if (user is not { EmailConfirmed: true })
         {
-            return BadRequest(
-                CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken())));
+            return BadRequest(CreateValidationProblem("ResetPasswordFailed",
+                "Reset password failed. Please try again."));
         }
 
-        IdentityResult result;
         try
         {
             var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetRequest.ResetCode));
-            result = await userManager.ResetPasswordAsync(user, code, resetRequest.NewPassword);
+            var result = await userManager.ResetPasswordAsync(user, code, resetRequest.NewPassword);
+            if (!result.Succeeded)
+            {
+                return BadRequest(CreateValidationProblem(result));
+            }
+
+            return Ok();
         }
         catch (FormatException)
         {
-            result = IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken());
+            return BadRequest(CreateValidationProblem("ResetPasswordFailed",
+                "Reset password failed. Please try again."));
         }
-
-        if (!result.Succeeded)
-        {
-            return BadRequest(CreateValidationProblem(result));
-        }
-
-        return Ok();
     }
 
     [HttpPost("cookie-logout")]
