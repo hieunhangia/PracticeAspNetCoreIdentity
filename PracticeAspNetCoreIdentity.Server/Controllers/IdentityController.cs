@@ -88,7 +88,7 @@ public class IdentityController(
                 "The provided login credentials are invalid. Please check your email and password and try again."));
         }
 
-        return Ok();
+        return Empty;
     }
 
     [HttpPost("google-login")]
@@ -324,50 +324,53 @@ public class IdentityController(
         return Ok(await CreateUserInfoResponseAsync(user));
     }
 
-    [HttpPost("manage/info")]
+    [HttpPost("set-password")]
     [Authorize]
-    public async Task<IActionResult> Info([FromBody] InfoRequest infoRequest)
+    public async Task<IActionResult> SetPassword([FromBody] SetPasswordRequest setPasswordRequest)
     {
         if (await userManager.GetUserAsync(User) is not { } user)
         {
-            return NotFound();
+            return Unauthorized();
         }
 
-        if (!string.IsNullOrEmpty(infoRequest.NewEmail) && !_emailAddressAttribute.IsValid(infoRequest.NewEmail))
+        if (await userManager.HasPasswordAsync(user))
         {
-            return BadRequest(
-                CreateValidationProblem(
-                    IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(infoRequest.NewEmail))));
+            return BadRequest(CreateValidationProblem("PasswordAlreadySet",
+                "Cannot set password because a password is already set for this account."));
         }
 
-        if (!string.IsNullOrEmpty(infoRequest.NewPassword))
+        var addPasswordResult = await userManager.AddPasswordAsync(user, setPasswordRequest.NewPassword);
+        if (!addPasswordResult.Succeeded)
         {
-            if (await userManager.HasPasswordAsync(user))
-            {
-                if (string.IsNullOrEmpty(infoRequest.OldPassword))
-                {
-                    return BadRequest(CreateValidationProblem("OldPasswordRequired",
-                        "The old password is required to set a new password. If the old password is forgotten, use /resetPassword."));
-                }
-
-                var changePasswordResult =
-                    await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
-                if (!changePasswordResult.Succeeded)
-                {
-                    return BadRequest(CreateValidationProblem(changePasswordResult));
-                }
-            }
-            else
-            {
-                var addPasswordResult = await userManager.AddPasswordAsync(user, infoRequest.NewPassword);
-                if (!addPasswordResult.Succeeded)
-                {
-                    return BadRequest(CreateValidationProblem(addPasswordResult));
-                }
-            }
+            return BadRequest(CreateValidationProblem(addPasswordResult));
         }
 
-        return Ok(await CreateUserInfoResponseAsync(user));
+        return Ok();
+    }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest changePasswordRequest)
+    {
+        if (await userManager.GetUserAsync(User) is not { } user)
+        {
+            return Unauthorized();
+        }
+
+        if (!await userManager.HasPasswordAsync(user))
+        {
+            return BadRequest(CreateValidationProblem("NoPassword",
+                "Cannot change password because no password is set for this account."));
+        }
+
+        var changePasswordResult = await userManager.ChangePasswordAsync(user, changePasswordRequest.OldPassword,
+            changePasswordRequest.NewPassword);
+        if (!changePasswordResult.Succeeded)
+        {
+            return BadRequest(CreateValidationProblem(changePasswordResult));
+        }
+
+        return Ok();
     }
 
     private static ValidationProblemDetails CreateValidationProblem(string errorCode, string errorDescription)

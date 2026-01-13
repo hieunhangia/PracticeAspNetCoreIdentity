@@ -62,13 +62,14 @@ public class CookieAuthenticationStateProvider(WebApiHttpClient webApiHttpClient
     public Task<ApiResult> ResetPasswordAsync(string email, string resetCode, string newPassword) =>
         webApiHttpClient.ResetPasswordAsync(email, resetCode, newPassword);
 
-    public Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword) =>
-        webApiHttpClient.ChangePasswordAsync(oldPassword, newPassword);
-
     public async Task<ApiResult> SetPasswordAsync(string newPassword)
     {
-        var result = await webApiHttpClient.SetPasswordAsync(newPassword);
+        var result = await webApiHttpClient.SetPasswordAsync(new SetPasswordRequest { NewPassword = newPassword });
         if (result.Succeeded) NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         return result;
     }
+
+    public Task<ApiResult> ChangePasswordAsync(string oldPassword, string newPassword) =>
+        webApiHttpClient.ChangePasswordAsync(new ChangePasswordRequest
+            { OldPassword = oldPassword, NewPassword = newPassword });
 }
