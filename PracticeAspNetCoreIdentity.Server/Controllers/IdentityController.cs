@@ -63,16 +63,12 @@ public class IdentityController(
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies,
-        [FromQuery] bool? useSessionCookies)
+    public async Task<IActionResult> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies)
     {
-        var isPersistent = useCookies == true && useSessionCookies != true;
-        signInManager.AuthenticationScheme = useCookies == true || useSessionCookies == true
-            ? IdentityConstants.ApplicationScheme
-            : IdentityConstants.BearerScheme;
+        signInManager.AuthenticationScheme =
+            useCookies == true ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
-        var result =
-            await signInManager.PasswordSignInAsync(login.Email, login.Password, isPersistent, lockoutOnFailure: true);
+        var result = await signInManager.PasswordSignInAsync(login.Email, login.Password, useCookies == true, lockoutOnFailure: true);
 
         if (result.IsLockedOut)
         {
@@ -310,16 +306,22 @@ public class IdentityController(
         return Ok();
     }
 
-    [HttpGet("manage/info")]
+    [HttpGet("info")]
     [Authorize]
     public async Task<IActionResult> Info()
     {
         if (await userManager.GetUserAsync(User) is not { } user)
         {
-            return NotFound();
+            return Unauthorized();
         }
 
-        return Ok(await CreateUserInfoResponseAsync(user));
+        return Ok(new UserInfoResponse
+        {
+            Email = user.Email ?? string.Empty,
+            EmailConfirmed = user.EmailConfirmed,
+            HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
+            Roles = (await userManager.GetRolesAsync(user)).ToList()
+        });
     }
 
     [HttpPost("set-password")]
@@ -380,20 +382,4 @@ public class IdentityController(
             Errors = result.Errors.GroupBy(e => e.Code)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray())
         };
-
-    private async Task<UserInfoResponse> CreateUserInfoResponseAsync(CustomUser user)
-    {
-        var emailTask = userManager.GetEmailAsync(user);
-        var emailConfirmedTask = userManager.IsEmailConfirmedAsync(user);
-        var hasPasswordTask = userManager.HasPasswordAsync(user);
-        var rolesTask = userManager.GetRolesAsync(user);
-        await Task.WhenAll(emailTask, emailConfirmedTask, hasPasswordTask, rolesTask);
-        return new UserInfoResponse
-        {
-            Email = await emailTask ?? throw new NotSupportedException("Users must have an email."),
-            EmailConfirmed = await emailConfirmedTask,
-            HasPassword = await hasPasswordTask,
-            Roles = (await rolesTask).ToList()
-        };
-    }
 }
