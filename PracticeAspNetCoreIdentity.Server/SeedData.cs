@@ -57,7 +57,7 @@ public static class SeedData
         await dbContext.Database.EnsureCreatedAsync();
 
         var roleManager = scopeService.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        var userManager = scopeService.GetRequiredService<UserManager<CustomUser>>();
+        var userManager = scopeService.GetRequiredService<UserManager<AppUser>>();
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
         foreach (var role in UserRole.AllRoles)
@@ -72,7 +72,7 @@ public static class SeedData
         {
             if (await userManager.FindByEmailAsync(userData.Email) != null) continue;
 
-            var user = new CustomUser
+            var user = new AppUser
             {
                 UserName = userData.Email,
                 Email = userData.Email

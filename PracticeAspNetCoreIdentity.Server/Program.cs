@@ -19,7 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddIdentityApiEndpoints<CustomUser>()
+builder.Services.AddIdentityApiEndpoints<AppUser>()
     .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>();
 
@@ -33,7 +33,7 @@ builder.Services.AddFluentEmail(builder.Configuration["EmailAddress"], builder.C
         RequiresAuthentication = true
     });
 
-builder.Services.AddTransient<IEmailSender<CustomUser>, EmailSender>();
+builder.Services.AddTransient<IEmailSender<AppUser>, EmailSender>();
 
 builder.Services.Configure<IdentityOptions>(options =>
 {

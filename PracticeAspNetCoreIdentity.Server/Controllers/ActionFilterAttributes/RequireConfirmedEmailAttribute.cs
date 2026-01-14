@@ -16,7 +16,7 @@ public class RequireConfirmedEmailAttribute : ActionFilterAttribute
             return;
         }
 
-        var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<CustomUser>>();
+        var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<AppUser>>();
         var currentUser = await userManager.GetUserAsync(user);
 
         if (currentUser != null && !await userManager.IsEmailConfirmedAsync(currentUser))

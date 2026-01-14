@@ -5,9 +5,9 @@ using PracticeAspNetCoreIdentity.Server.Models;
 
 namespace PracticeAspNetCoreIdentity.Server;
 
-public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
+public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<AppUser>
 {
-    public Task SendConfirmationLinkAsync(CustomUser user, string email, string confirmationLink)
+    public Task SendConfirmationLinkAsync(AppUser user, string email, string confirmationLink)
         => SendEmailAsync(email, "Confirm your email",
             $"""
              <html lang="en">
@@ -21,7 +21,7 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
              </html>
              """);
 
-    public Task SendPasswordResetLinkAsync(CustomUser user, string email, string resetLink) =>
+    public Task SendPasswordResetLinkAsync(AppUser user, string email, string resetLink) =>
         SendEmailAsync(email, "Reset your password",
             $"""
              <html lang="en">
@@ -35,7 +35,7 @@ public class EmailSender(IFluentEmail fluentEmail) : IEmailSender<CustomUser>
              </html>
              """);
 
-    public Task SendPasswordResetCodeAsync(CustomUser user, string email, string resetCode) =>
+    public Task SendPasswordResetCodeAsync(AppUser user, string email, string resetCode) =>
         Task.CompletedTask; // Not implemented
 
 

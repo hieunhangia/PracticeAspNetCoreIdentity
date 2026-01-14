@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace PracticeAspNetCoreIdentity.Server.Models;
 
-public class CustomUser : IdentityUser<Guid>
+public class AppUser : IdentityUser<Guid>
 {
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 

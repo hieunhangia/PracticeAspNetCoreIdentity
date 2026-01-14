@@ -12,7 +12,7 @@ namespace PracticeAspNetCoreIdentity.Server.Controllers;
 [ApiController]
 [Route("accounts")]
 [Authorize(Roles = UserRole.Administrator)]
-public class AdminAccountController(UserManager<CustomUser> userManager) : ControllerBase
+public class AdminAccountController(UserManager<AppUser> userManager) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAllAccountsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10,

@@ -6,7 +6,7 @@ using PracticeAspNetCoreIdentity.Server.Models;
 namespace PracticeAspNetCoreIdentity.Server;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : IdentityDbContext<CustomUser, IdentityRole<Guid>, Guid>(options)
+    : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<UserNote> UserNotes { get; set; }
 
@@ -29,7 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     private static void ConfigureIdentityTablesName(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<CustomUser>(b => b.ToTable("Users"));
+        modelBuilder.Entity<AppUser>(b => b.ToTable("Users"));
         modelBuilder.Entity<IdentityUserClaim<Guid>>(b => b.ToTable("UserClaims"));
         modelBuilder.Entity<IdentityUserLogin<Guid>>(b => b.ToTable("UserLogins"));
         modelBuilder.Entity<IdentityUserToken<Guid>>(b => b.ToTable("UserTokens"));

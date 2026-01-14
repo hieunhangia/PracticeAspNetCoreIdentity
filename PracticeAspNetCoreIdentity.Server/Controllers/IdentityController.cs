@@ -19,9 +19,9 @@ namespace PracticeAspNetCoreIdentity.Server.Controllers;
 public class IdentityController(
     AppDbContext dbContext,
     IConfiguration configuration,
-    UserManager<CustomUser> userManager,
-    SignInManager<CustomUser> signInManager,
-    IEmailSender<CustomUser> emailSender,
+    UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager,
+    IEmailSender<AppUser> emailSender,
     IOptionsMonitor<BearerTokenOptions> bearerTokenOptions,
     TimeProvider timeProvider
 ) : ControllerBase
@@ -29,7 +29,7 @@ public class IdentityController(
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registration)
     {
-        var user = new CustomUser
+        var user = new AppUser
         {
             UserName = registration.Email,
             Email = registration.Email
@@ -110,7 +110,7 @@ public class IdentityController(
                 user = await userManager.FindByEmailAsync(payload.Email);
                 if (user == null)
                 {
-                    user = new CustomUser
+                    user = new AppUser
                     {
                         UserName = payload.Email,
                         Email = payload.Email,
