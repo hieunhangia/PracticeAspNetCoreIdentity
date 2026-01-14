@@ -9,17 +9,22 @@ public class RequireConfirmedEmailAttribute : ActionFilterAttribute
 {
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        var user = context.HttpContext.User;
-        if (user.Identity is not { IsAuthenticated: true })
+        if (context.HttpContext.User.Identity is not { IsAuthenticated: true })
         {
-            await next();
+            context.Result = new UnauthorizedResult();
             return;
         }
 
         var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<AppUser>>();
-        var currentUser = await userManager.GetUserAsync(user);
+        var currentUser = await userManager.GetUserAsync(context.HttpContext.User);
 
-        if (currentUser != null && !await userManager.IsEmailConfirmedAsync(currentUser))
+        if (currentUser == null)
+        {
+            context.Result = new UnauthorizedResult();
+            return;
+        }
+
+        if (!currentUser.EmailConfirmed)
         {
             context.Result = new ObjectResult(new ProblemDetails
             {
