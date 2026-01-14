@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using PracticeAspNetCoreIdentity.Server.Models;
@@ -41,19 +42,19 @@ public class IdentityController(
         {
             if (result.Errors.All(e => e.Code != "DuplicateEmail"))
             {
-                return BadRequest(CreateValidationProblem(result));
+                return CreateValidationProblem(result);
             }
 
             var errors = result.Errors.ToList();
             errors.RemoveAll(e => e.Code == "DuplicateUserName");
             result = IdentityResult.Failed(errors.ToArray());
-            return BadRequest(CreateValidationProblem(result));
+            return CreateValidationProblem(result);
         }
 
         result = await userManager.AddToRoleAsync(user, UserRole.User);
         if (!result.Succeeded)
         {
-            return BadRequest(CreateValidationProblem(result));
+            return CreateValidationProblem(result);
         }
 
         await transaction.CommitAsync();
@@ -71,14 +72,16 @@ public class IdentityController(
 
         if (result.IsLockedOut)
         {
-            return BadRequest(CreateValidationProblem("TooManyFailedLoginAttempts",
-                "Too many failed login attempts have occurred. Please try again later."));
+            return Problem("Too many failed login attempts have occurred. Please try again later.",
+                title: "Too Many Failed Login Attempts",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         if (!result.Succeeded)
         {
-            return BadRequest(CreateValidationProblem("InvalidLogin",
-                "The provided login credentials are invalid. Please check your email and password and try again."));
+            return Problem("Invalid email or password.",
+                title: "Login Failed",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         return Empty;
@@ -94,8 +97,9 @@ public class IdentityController(
 
             if (!payload.EmailVerified)
             {
-                return BadRequest(CreateValidationProblem("UnverifiedEmail",
-                    "The email address is not verified by Google and cannot be used to log in."));
+                return Problem("Google account email is not verified.",
+                    title: "Google Login Failed",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             var user = await userManager.FindByLoginAsync(Identity.Constants.LoginProvider.Google, payload.Subject);
@@ -116,13 +120,13 @@ public class IdentityController(
                     var result = await userManager.CreateAsync(user);
                     if (!result.Succeeded)
                     {
-                        return BadRequest(CreateValidationProblem(result));
+                        return CreateValidationProblem(result);
                     }
 
                     result = await userManager.AddToRoleAsync(user, UserRole.User);
                     if (!result.Succeeded)
                     {
-                        return BadRequest(CreateValidationProblem(result));
+                        return CreateValidationProblem(result);
                     }
 
                     result = await userManager.AddLoginAsync(user,
@@ -130,7 +134,7 @@ public class IdentityController(
                             Identity.Constants.LoginProvider.Google));
                     if (!result.Succeeded)
                     {
-                        return BadRequest(CreateValidationProblem(result));
+                        return CreateValidationProblem(result);
                     }
                 }
                 else
@@ -140,7 +144,7 @@ public class IdentityController(
                             Identity.Constants.LoginProvider.Google));
                     if (!result.Succeeded)
                     {
-                        return BadRequest(CreateValidationProblem(result));
+                        return CreateValidationProblem(result);
                     }
 
                     if (!user.EmailConfirmed)
@@ -149,7 +153,7 @@ public class IdentityController(
                         result = await userManager.UpdateAsync(user);
                         if (!result.Succeeded)
                         {
-                            return BadRequest(CreateValidationProblem(result));
+                            return CreateValidationProblem(result);
                         }
                     }
                 }
@@ -165,7 +169,9 @@ public class IdentityController(
         }
         catch (InvalidJwtException)
         {
-            return BadRequest(CreateValidationProblem("InvalidIdToken", "The provided Google ID token is invalid."));
+            return Problem("Invalid Google ID token.",
+                title: "Google Login Failed",
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -197,7 +203,9 @@ public class IdentityController(
 
         if (user.EmailConfirmed)
         {
-            return BadRequest(CreateValidationProblem("EmailAlreadyConfirmed", "The email is already confirmed."));
+            return Problem("Email is already confirmed.",
+                title: "Email Already Confirmed",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var clientUrl = configuration["ClientUrl"] ??
@@ -219,10 +227,16 @@ public class IdentityController(
     [HttpPost("confirm-email")]
     public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest confirmEmailRequest)
     {
-        if (await userManager.FindByEmailAsync(confirmEmailRequest.Email) is not { } user || user.EmailConfirmed)
+        if (await userManager.FindByEmailAsync(confirmEmailRequest.Email) is not { } user)
         {
-            return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
-                "Confirmation email failed. Please try again."));
+            return Problem("Email confirmation failed. Please try again.",
+                title: "Email Confirmation Failed",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        if (user.EmailConfirmed)
+        {
+            return Ok();
         }
 
         try
@@ -231,16 +245,18 @@ public class IdentityController(
             var result = await userManager.ConfirmEmailAsync(user, code);
             if (!result.Succeeded)
             {
-                return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
-                    "Confirmation email failed. Please try again."));
+                return Problem("Email confirmation failed. Please try again.",
+                    title: "Email Confirmation Failed",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             return Ok();
         }
         catch (FormatException)
         {
-            return BadRequest(CreateValidationProblem("ConfirmEmailFailed",
-                "Confirmation email failed. Please try again."));
+            return Problem("Email confirmation failed. Please try again.",
+                title: "Email Confirmation Failed",
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -277,25 +293,22 @@ public class IdentityController(
 
         if (user is not { EmailConfirmed: true })
         {
-            return BadRequest(CreateValidationProblem("ResetPasswordFailed",
-                "Reset password failed. Please try again."));
+            return Problem("Reset password failed. Please try again.",
+                title: "Reset Password Failed",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         try
         {
             var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetRequest.ResetCode));
             var result = await userManager.ResetPasswordAsync(user, code, resetRequest.NewPassword);
-            if (!result.Succeeded)
-            {
-                return BadRequest(CreateValidationProblem(result));
-            }
-
-            return Ok();
+            return result.Succeeded ? Ok() : CreateValidationProblem(result);
         }
         catch (FormatException)
         {
-            return BadRequest(CreateValidationProblem("ResetPasswordFailed",
-                "Reset password failed. Please try again."));
+            return Problem("Reset password failed. Please try again.",
+                title: "Reset Password Failed",
+                statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -336,17 +349,13 @@ public class IdentityController(
 
         if (!string.IsNullOrEmpty(user.PasswordHash))
         {
-            return BadRequest(CreateValidationProblem("PasswordAlreadySet",
-                "Cannot set password because a password is already set for this account."));
+            return Problem("Password is already set for this account.",
+                title: "Password Already Set",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var addPasswordResult = await userManager.AddPasswordAsync(user, setPasswordRequest.NewPassword);
-        if (!addPasswordResult.Succeeded)
-        {
-            return BadRequest(CreateValidationProblem(addPasswordResult));
-        }
-
-        return Ok();
+        var result = await userManager.AddPasswordAsync(user, setPasswordRequest.NewPassword);
+        return result.Succeeded ? Ok() : CreateValidationProblem(result);
     }
 
     [HttpPost("change-password")]
@@ -360,27 +369,24 @@ public class IdentityController(
 
         if (string.IsNullOrEmpty(user.PasswordHash))
         {
-            return BadRequest(CreateValidationProblem("NoPassword",
-                "Cannot change password because no password is set for this account."));
+            return Problem("No password is set for this account.",
+                title: "Change Password Failed",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var changePasswordResult = await userManager.ChangePasswordAsync(user, changePasswordRequest.OldPassword,
+        var result = await userManager.ChangePasswordAsync(user, changePasswordRequest.OldPassword,
             changePasswordRequest.NewPassword);
-        if (!changePasswordResult.Succeeded)
-        {
-            return BadRequest(CreateValidationProblem(changePasswordResult));
-        }
-
-        return Ok();
+        return result.Succeeded ? Ok() : CreateValidationProblem(result);
     }
 
-    private static ValidationProblemDetails CreateValidationProblem(string errorCode, string errorDescription)
-        => new() { Errors = new Dictionary<string, string[]> { [errorCode] = [errorDescription] } };
-
-    private static ValidationProblemDetails CreateValidationProblem(IdentityResult result)
-        => new()
+    private ActionResult CreateValidationProblem(IdentityResult result)
+    {
+        var modelState = new ModelStateDictionary();
+        foreach (var error in result.Errors)
         {
-            Errors = result.Errors.GroupBy(e => e.Code)
-                .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray())
-        };
+            modelState.AddModelError(error.Code, error.Description);
+        }
+
+        return ValidationProblem(modelState);
+    }
 }
