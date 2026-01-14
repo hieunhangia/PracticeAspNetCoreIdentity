@@ -334,7 +334,7 @@ public class IdentityController(
             return Unauthorized();
         }
 
-        if (await userManager.HasPasswordAsync(user))
+        if (!string.IsNullOrEmpty(user.PasswordHash))
         {
             return BadRequest(CreateValidationProblem("PasswordAlreadySet",
                 "Cannot set password because a password is already set for this account."));
@@ -358,7 +358,7 @@ public class IdentityController(
             return Unauthorized();
         }
 
-        if (!await userManager.HasPasswordAsync(user))
+        if (string.IsNullOrEmpty(user.PasswordHash))
         {
             return BadRequest(CreateValidationProblem("NoPassword",
                 "Cannot change password because no password is set for this account."));
