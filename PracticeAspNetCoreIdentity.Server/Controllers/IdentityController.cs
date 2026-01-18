@@ -263,9 +263,7 @@ public class IdentityController(
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
     {
-        var user = await userManager.FindByEmailAsync(resetRequest.Email);
-
-        if (user is not { EmailConfirmed: true })
+        if (await userManager.FindByEmailAsync(resetRequest.Email) is not { } user)
         {
             return Ok();
         }
